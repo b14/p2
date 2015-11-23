@@ -4,8 +4,7 @@ This is a collection of modules related to personal user experience in DDBCMS / 
 
 To install the complete package download the repo and
 
-```drush en ding_p2_installer
-```
+drush en ding_p2_installer
 
 ## Configuration of OpenList ##
 The installation comes with a developer configuration for OpenList.
