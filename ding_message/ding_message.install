@@ -1,0 +1,51 @@
+<?php
+
+/**
+ * @file
+ * Code for the Ding special user feature.
+ */
+
+/**
+ * Create tables.
+ */
+function ding_message_schema() {
+  $schema['ding_message_check'] = array(
+    'description' => 'Record when users where updated with messages',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier for an entry',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'The user checked.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'time' => array(
+        'description' => 'Time of the check.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'indexes' => array(
+      'time' => array('time'),
+    ),
+    'unique keys' => array(
+      'uid' => array('uid'),
+    ),
+    'foreign keys' => array(
+      'uid' => array(
+        'table' => 'users',
+        'columns' => array('uid' => 'uid'),
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  return $schema;
+}

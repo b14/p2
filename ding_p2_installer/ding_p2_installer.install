@@ -1,0 +1,77 @@
+<?php
+
+/**
+ * Implements hook_install().
+ *
+ * Add Danish p2 translations.
+ */
+function ding_p2_installer_install() {
+  $path = drupal_get_path('module', 'ding_p2_installer');
+  $poFile = $path . '/ding_p2_install_da.po';
+  $file = new stdClass;
+  $file->uri = $poFile;
+  $file->filename = basename($poFile); 
+  _locale_import_po($file, 'da', LOCALE_IMPORT_KEEP, 'default');
+  drupal_set_message('Please run a database update to finish the installation of Personalisering / P2.', 'warning');
+
+  // Set an initial value for the schema version so we can run updates after install.
+  drupal_set_installed_schema_version('ding_p2_installer', 7000);
+}
+ 
+/**
+ * Implements hook_update().
+ *
+ * Inserts ratings and serendipity extra fields on Ting Objects.
+ */
+function ding_p2_installer_update_7001() {
+  // Load each field group for each display mode,
+  // and insert rating and serendipity fields in the correct field groups.
+  
+  // Default:
+  $view_mode = 'default';
+  $group = field_group_load_field_group('group_ting_object_right_column', 'ting_object', 'ting_object', $view_mode);
+  $group->children[] = 'ding_serendipity_info';
+  $group->children[] = 'ding_entity_rating_action';
+  $group->children[] = 'ding_entity_rating_result';
+  field_group_group_save($group);
+  
+  // Fix the row weights:
+  ding_p2_installer_extra_field_update_weight('ding_serendipity_info', 'ting_object', 'ting_object', $view_mode, 6);
+  ding_p2_installer_extra_field_update_weight('ding_entity_rating_action', 'ting_object', 'ting_object', $view_mode, 7);
+  ding_p2_installer_extra_field_update_weight('ding_entity_rating_result', 'ting_object', 'ting_object', $view_mode, 8);
+  
+  ding_p2_installer_field_update_weight('ting_series', 'ting_object', 'ting_object', $view_mode, 9);
+  ding_p2_installer_field_update_weight('ting_subjects', 'ting_object', 'ting_object', $view_mode, 10);
+  ding_p2_installer_field_update_weight('ding_entity_buttons', 'ting_object', 'ting_object', $view_mode, 11);
+  
+  // Teaser:
+  $view_mode = 'teaser';
+  $group = field_group_load_field_group('group_ting_object_teaser_right', 'ting_object', 'ting_object', $view_mode);
+  $group->children[] = 'ding_serendipity_info';
+  $group->children[] = 'ding_entity_rating_action';
+  $group->children[] = 'ding_entity_rating_result';
+  field_group_group_save($group);
+  
+  ding_p2_installer_extra_field_update_weight('ding_serendipity_info', 'ting_object', 'ting_object', $view_mode, 7);
+  ding_p2_installer_extra_field_update_weight('ding_entity_rating_action', 'ting_object', 'ting_object', $view_mode, 8);
+  ding_p2_installer_extra_field_update_weight('ding_entity_rating_result', 'ting_object', 'ting_object', $view_mode, 9);
+  
+  // Search result:
+  $view_mode = 'search_result';
+  $group = field_group_load_field_group('group_ting_right_col_search', 'ting_object', 'ting_object', $view_mode);
+  $group->children[] = 'ding_entity_rating_action';
+  $group->children[] = 'ding_entity_rating_result';
+  field_group_group_save($group);
+  
+  ding_p2_installer_extra_field_update_weight('ding_serendipity_info', 'ting_object', 'ting_object', $view_mode, 0, FALSE);
+  ding_p2_installer_extra_field_update_weight('ding_entity_rating_action', 'ting_object', 'ting_object', $view_mode, 20);
+  ding_p2_installer_extra_field_update_weight('ding_entity_rating_result', 'ting_object', 'ting_object', $view_mode, 21);
+  
+  // Compact:
+  $view_mode = 'compact';
+  ding_p2_installer_extra_field_update_weight('ding_serendipity_info', 'ting_object', 'ting_object', $view_mode, 0, FALSE);
+  ding_p2_installer_extra_field_update_weight('ding_entity_rating_action', 'ting_object', 'ting_object', $view_mode, 3);
+  ding_p2_installer_extra_field_update_weight('ding_entity_rating_result', 'ting_object', 'ting_object', $view_mode, 4);
+  
+  cache_clear_all('field_groups', 'cache_field');
+}

@@ -1,0 +1,6 @@
+name = Ding interaction manual
+description = Create custom ding interaction messages.
+package = Ding!
+version = "7.x-1.x-dev"
+core = 7.x
+dependencies[] = eck

@@ -1,0 +1,85 @@
+<?php
+
+/**
+ * @file
+ * Ding Interaction Manual implements manual editable entities via ECK
+ * so editors of the website can enter text and links to be displayed
+ * in rotation with all the other available ding_interactions
+ * Overview: /admin/structure/entity-type/ding_type/ding_interaction
+ */
+
+/**
+ * Implements hook_secure_permissions().
+ *
+ * @TODO: Please move permission into ding_permission so they are all defined in
+ *        the same module. This makes it easier to override permission in the
+ *        different installations.
+ */
+function ding_interaction_manual_secure_permissions($role) {
+  $permissions = array(
+    'authenticated user' => array(),
+    'editor' => array(
+      'eck add ding_type ding_interaction entities',
+      'eck edit ding_type ding_interaction entities',
+      'eck delete ding_type ding_interaction entities',
+      'eck list ding_type ding_interaction entities',
+      'eck view ding_type ding_interaction entities',
+    ),
+    'local editor' => array(
+      'eck add ding_type ding_interaction entities',
+      'eck edit ding_type ding_interaction entities',
+      'eck delete ding_type ding_interaction entities',
+      'eck list ding_type ding_interaction entities',
+      'eck view ding_type ding_interaction entities',
+    ),
+  );
+  if (isset($permissions[$role])) {
+    return $permissions[$role];
+  }
+}
+
+/**
+ * Implements template_preprocess_entity().
+ *
+ * Removes the link from the ding_interaction entity.
+ */
+function ding_interaction_manual_preprocess_entity(&$variables) {
+  if ($variables['elements']['#entity_type'] === 'ding_type' && $variables['elements']['#entity']->type === 'ding_interaction') {
+    $variables['url'] = FALSE;
+  }
+}
+
+/**
+ * Implements hook_ding_interaction_view().
+ */
+function ding_interaction_manual_ding_interaction_view() {
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'ding_type')
+    ->entityCondition('bundle', 'ding_interaction')
+    ->fieldCondition('field_ding_interaction_status', 'value', '1', '=');
+
+  $result = $query->execute();
+  if (isset($result['ding_type'])) {
+    $key = array_keys($result['ding_type']);
+    $key = $key[array_rand($key)];
+    $entity = entity_load_single('ding_type', $key);
+
+    $render = current(current(entity_view('ding_type', array($entity), 'teaser')));
+    
+    drupal_add_css(drupal_get_path('module', 'ding_interaction_manual') . '/css/ding-interaction-manual.css');
+    return array('data' => render($render));
+  }
+
+  return '';
+}
+
+/**
+ * Implements hook_ding_interaction_info().
+ */
+function ding_interaction_manual_ding_interaction_info() {
+  return array(
+    'title' => t('Ding interaction manual'),
+    'css_class' => 'ding-interaction-manual complete-info',
+    'active' => TRUE,
+  );
+}

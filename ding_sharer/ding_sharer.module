@@ -1,0 +1,38 @@
+<?php
+/**
+ * @file
+ * Ding sharer
+ */
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function ding_sharer_ctools_plugin_directory($owner, $plugin_type) {
+  if ($owner == 'ctools' && $plugin_type == 'content_types') {
+    return 'plugins/content_types';
+  }
+}
+
+/**
+ * Implements hook_html_head_alter().
+ */
+function ding_sharer_html_head_alter(&$head_elements) {
+  if (arg(0) === 'ting' && arg(1) === 'object' && arg(2)) {
+    $local_id = explode(':', arg(2));
+    $local_id = $local_id[1];
+
+    $image_url = image_style_url('ding_campaign_w_380', ting_covers_object_path($local_id));
+    if (file_exists($image_url)) {
+      file_get_contents($image_url);
+
+      $head_elements['ogurl'] = array(
+        '#type' => 'html_tag',
+        '#tag' => 'meta',
+        '#attributes' => array(
+          'property' => 'og:image',
+          'content' => $image_url,
+        ),
+      );
+    }
+  }
+}

@@ -1,0 +1,61 @@
+<?php
+
+/**
+ * @file
+ * Ding serendipity content
+ *
+ * This module provides a set of serendipity functions which deliver serendipity
+ * content based on the available fields and entities in the ding2 profile.
+ */
+
+/**
+ * Implements hook_serendipity_info().
+ */
+function ding_serendipity_fallback_serendipity_info() {
+  return array(
+    'ting_object' => array(
+      'title' => 'Fallback materials',
+      'description' => 'Returns fallback content.',
+      'keys' => array('ting_object'),
+    ),
+  );
+}
+
+/**
+ * Ding Serendipity function for nodes related content.
+ *
+ * The content returned by this function consists of nodes from the site.
+ *
+ * @context array
+ *   Serendipity context array
+ *
+ * @return array
+ *   Array of results, each result should contain a type and an id key.
+ *   - Type is the entity Type.
+ *   - id the entity id.
+ */
+function ding_serendipity_fallback_ting_object_serendipity_add($context) {
+  $results = array();
+
+  // Ensure that the context is set.
+  if (!isset($context['ting_object'])) {
+    return array();
+  }
+
+  $query = variable_get('ding_serendipity_search_string_final');
+
+  if (!empty($query)) {
+    try {
+      $results = ding_serendipity_do_search($query);
+    }
+    catch (Exception $e) {
+      watchdog_exception(__FUNCTION__, $e);
+    }
+
+    foreach ($results as & $item) {
+      $item['info']['description'] = t('This is new content.');
+    }
+  }
+
+  return $results;
+}

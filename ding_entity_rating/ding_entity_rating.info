@@ -1,0 +1,11 @@
+name = Ding entity rating
+description = Allow users to rate ting objects
+package = Ding!
+core = 7.x
+files[] = ding_entity_rating.module
+
+dependencies[] = ding_list
+dependencies[] = ding_user
+dependencies[] = ding_entity
+dependencies[] = ding_serendipity
+dependencies[] = ding_provider

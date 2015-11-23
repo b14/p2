@@ -1,0 +1,30 @@
+<?php
+
+/**
+ * @file
+ * Ding interaction pane
+ */
+
+/**
+ * Implements hook_ding_interaction_view().
+ */
+function ding_interaction_example_ding_interaction_view() {
+  if (user_is_logged_in()) {
+    $view = '<div class="test-data">' . t('This is a test of ding interaction') . '</div>';
+    if ($view) {
+      return $view;
+    }
+  }
+  return '';
+}
+
+/**
+ * Implements hook_ding_interaction_info().
+ */
+function ding_interaction_example_ding_interaction_info() {
+  $active = user_is_logged_in();
+  return array(
+    'title' => t('Ding interaction example'),
+    'active' => $active,
+  );
+}
