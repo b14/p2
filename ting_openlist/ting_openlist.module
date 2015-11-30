@@ -299,7 +299,7 @@ function ting_openlist_get_soap($wsdl = NULL, $trace = FALSE) {
 
     // Create the client, catch any error and log it.
     try {
-      $clients[$wsdl] = new SoapClient(
+      $clients[$wsdl] = @new SoapClient(
         $wsdl, array(
           'trace' => $trace,
           'cache_wsdl' => variable_get('ting_openlist_wsdl_cache', FALSE) ? WSDL_CACHE_DISK : WSDL_CACHE_NONE,

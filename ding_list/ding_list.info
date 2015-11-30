@@ -11,3 +11,4 @@ dependencies[] = ding_popup
 dependencies[] = ding_provider
 dependencies[] = ding_user
 dependencies[] = eck
+dependencies[] = simplevar

@@ -16,6 +16,11 @@ $plugin = array(
  * Implements hook_content_type_render().
  */
 function ding_entity_rating_popular_content_type_render($subtype, $conf, $panel_args, $context) {
+  // Only show on front if activated.
+  if(drupal_is_front_page() && !variable_get('ding_frontpage_serendipity') && variable_get('ding_frontpage_promoter') != 'serendipity') {
+    return;
+  }
+  
   $block = new stdClass();
 
   $month = $conf['month'];
@@ -31,11 +36,21 @@ function ding_entity_rating_popular_content_type_render($subtype, $conf, $panel_
     $libcode = variable_get('ting_library_code', '');
   }
 
-  $openlist_items = ding_provider_invoke('openlist', 'request', 'callModule', array(
+  $openlist_items = array();
+  try {
+    $openlist_items = ding_provider_invoke('openlist', 'request', 'callModule', array(
       'TingObjectRating',
       'getPopular',
       array($month, $libcode, 10),
     ));
+  }
+  catch (Exception $e) {
+    // NOP
+  }
+  
+  if (empty($openlist_items)) {
+    return FALSE;
+  }
 
   $keys = array();
   foreach ($openlist_items as $openlist_item) {

@@ -399,6 +399,7 @@ function ding_list_detach_ding_list_element(&$list, $element_ids = array(), $sav
         ding_provider_invoke('openlist', 'request', 'deleteElement', array($openlist_ids));
       }
       catch (Exception $e) {
+        drupal_set_message(t("An error occurred while deleting your element. Please contact the administrator if this problem persists."), 'error');
         $transaction->rollback();
         return FALSE;
       }

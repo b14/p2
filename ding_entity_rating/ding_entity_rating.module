@@ -241,7 +241,7 @@ function ding_entity_rating_theme($existing, $type, $theme, $path) {
 function theme_ding_entity_rating_ding_user_complete_description($variables) {
   global $user;
   $uid = $user->uid;
-  $history_button = $history_list ? "<li>" . l(t("Rate previous loans"), "list/" . $history_list->id) . "</li>" : "";
+  $history_button = isset($history_list) ? "<li>" . l(t("Rate previous loans"), "list/" . $history_list->id) . "</li>" : "";
   
   return "<div class='description'>" .
     t('You could rate materials to give us an idea of your preferences.') .

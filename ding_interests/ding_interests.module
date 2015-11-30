@@ -584,7 +584,7 @@ function ding_interests_theme($existing, $type, $theme, $path) {
   $theme = array(
     'ding_interests_tree' => array(
       // 'template' => 'ding-in',
-      'variables' => array('root' => 0),
+      'variables' => array('root' => 0, 'tree' => array()),
       // 'path' => $path . '/theme',
     ),
   );

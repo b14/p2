@@ -125,25 +125,30 @@ function ding_serendipity_lists_ting_objects_adhr_serendipity_add($context) {
   shuffle($five_ids);
   $five_ids = array_splice($five_ids, 0, 4);
   $buffer = entity_load('ding_type', $five_ids);
-
+  
   // Get other suggestions from openlist.
   foreach ($buffer as $item) {
     $value = ding_list_get_list_element_value($item);
-    $openlist_items = ding_provider_invoke('openlist', 'request', 'callModule', array(
-      'TingObjectRating',
-      'getSuggestion',
-      array($value),
-    ));
+    try {
+      $openlist_items = ding_provider_invoke('openlist', 'request', 'callModule', array(
+        'TingObjectRating',
+        'getSuggestion',
+        array($value),
+      ));
     
-    // Only include items not rated by the user.
-    foreach ($openlist_items as $openlist_item) {
-      $id = ding_list_convert_cql($openlist_item);
-      if (!in_array($id, $item_ids)) {
-        $results[] = array(
-          $id,
-          $value,
-        );
+      // Only include items not rated by the user.
+      foreach ($openlist_items as $openlist_item) {
+        $id = ding_list_convert_cql($openlist_item);
+        if (!in_array($id, $item_ids)) {
+          $results[] = array(
+            $id,
+            $value,
+          );
+        }
       }
+    }
+    catch (Exception $e) {
+      // NOP
     }
   }
 

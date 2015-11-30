@@ -49714,10 +49714,6 @@ msgstr "Tilføj emne til liste"
 msgid "Add term to list."
 msgstr "Tilføj emne til liste."
 
-#: /users/biblioteker/ddbcms_dev/admin/structure/ting_object?render=overlay
-msgid "Beskirvelse"
-msgstr "Beskrivelse"
-
 #: /users/biblioteker/ddbcms_dev/ting/collection/870970-basis%3A25194853
 msgid "Add author"
 msgstr "Tilføj forfatter"

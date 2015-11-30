@@ -21,8 +21,6 @@ $plugin = array(
  * To-do: doc here.
  */
 function ding_interests_overview_content_type_render($subtype, $conf, $panel_args, $context) {
-  $term = $context->data;
-
   $block = new stdClass();
 
   $block->content = theme('ding_interests_tree');

@@ -33,6 +33,11 @@ function ding_interaction_admin_info($subtype, $conf, $context) {
  * Implements hook_content_type_render().
  */
 function ding_interaction_content_type_render($subtype, $conf, $panel_args, $context) {
+  // Only show on front if activated.
+  if(drupal_is_front_page() && !variable_get('ding_frontpage_serendipity') && variable_get('ding_frontpage_promoter') != 'serendipity') {
+    return;
+  }
+
   // Include the CTools tools that we need.
   ctools_include('ajax');
   drupal_add_js(drupal_get_path('module', 'ding_interaction') . '/js/ding_interaction.js');

@@ -372,15 +372,12 @@ function ding_list_ctools_plugin_directory($owner, $plugin_type) {
 function ding_list_user_login(&$edit, $account) {
   if (module_exists('ting_openlist')) {
     ting_openlist_update_user($account);
+    
+    // Synchronize with openlist.
+    ding_list_sync_openlist($account);
   }
 
   if (ding_user_consent_has_consent('loan_history_store')) {
-    // It should only do this if it has user consent.
-    if (module_exists('ting_openlist')) {
-      // Synchronize with openlist.
-      ding_list_sync_openlist($account);
-    }
-
     // Create any missing auto created lists.
     ding_list_setup_autocreated($account);
 
@@ -390,6 +387,39 @@ function ding_list_user_login(&$edit, $account) {
   else {
     // Create any missing autocreated lists.
     ding_list_setup_autocreated($account);
+  }
+  
+  ding_list_import_bookmarks($account);
+}
+
+/**
+ * Import from bookmarks.
+ */
+function ding_list_import_bookmarks($account) {
+  if (simplevar_get('ding_list_import_bookmarks', $account->uid, FALSE) === TRUE) {
+    return;
+  }
+  
+  $bookmarks = ding_bookmark_load_bookmarks($account);    
+  if (empty($bookmarks)) {
+    simplevar_set('ding_list_import_bookmarks', $account->uid, TRUE);
+  }
+  
+  try {
+    $list = ding_list_get_list(DING_LIST_TYPE_REMEMBER);
+    
+    if ($list) {
+      foreach ($bookmarks as $bookmark) {
+        ding_list_create_ding_list_element($list, 'ting_object', array('value' => $bookmark->ding_entity_id), $account, FALSE);
+      }
+      
+      $list->save();
+      
+      simplevar_set('ding_list_import_bookmarks', $account->uid, TRUE);
+    }
+  }
+  catch (Exception $e) {
+    // NOP
   }
 }
 

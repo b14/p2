@@ -157,8 +157,10 @@ function ding_list_lists_content_type_render($subtype, $conf, $panel_args, $cont
  * A custom sorting function.
  */
 function ding_list_custom_sort_changed($a, $b) {
-  if ($a[0]['#list']->changed == $b[0]['#list']->changed) {
-    return 0;
+  if($a && $b) {
+    if ($a[0]['#list']->changed == $b[0]['#list']->changed) {
+      return 0;
+    }
+    return ($a[0]['#list']->changed > $b[0]['#list']->changed) ? -1 : 1;
   }
-  return ($a[0]['#list']->changed > $b[0]['#list']->changed) ? -1 : 1;
 }

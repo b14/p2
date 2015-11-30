@@ -13,7 +13,7 @@ function ding_user_consent_admin_form($form, &$form_state) {
     '#type' => 'checkbox',
     '#title' => t('Enable user consent'),
     '#description' => t('Give users access to consent to store their loan history for more than 30 days.'),
-    '#default_value' => variable_get('user_consent_activate', ''),
+    '#default_value' => variable_get('user_consent_activate', TRUE),
   );
 
   $consents = ding_provider_invoke('user_consent', 'info');

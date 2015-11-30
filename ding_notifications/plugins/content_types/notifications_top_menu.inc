@@ -38,7 +38,7 @@ function ding_notifications_content_type_render($subtype, $conf, $panel_args, $c
   $cache_key = __FUNCTION__ . ':' . md5($user->uid . serialize($conf));
   $cache = cache_get($cache_key);
 
-  if ($cache->expire > time() && arg(0) != 'user') {
+  if (isset($cache->expire) && $cache->expire > time() && arg(0) != 'user') {
     return $cache->data;
   }
 
@@ -73,7 +73,7 @@ function ding_notifications_content_type_render($subtype, $conf, $panel_args, $c
     $content[] = l($link_text_t, 'user', $attr);
   }
 
-  if (isset($defaults['Ready to pickup'])) {
+  if (isset($defaults['ready_to_pickup'])) {
     $ready_to_pickup = ding_provider_invoke_page('reservation', 'list', $user, DING_RESERVATION_READY);
     $ready_to_pickup_count = count($ready_to_pickup);
     $classes = 'icon-folder-open notifications-pickup';
@@ -91,7 +91,7 @@ function ding_notifications_content_type_render($subtype, $conf, $panel_args, $c
     $content[] = l($ready_to_pickup_count_t, $uri['path'] . '/status/reservations', $attr);
   }
 
-  if (isset($defaults['Dept'])) {
+  if (isset($defaults['dept'])) {
     $debts = ding_provider_invoke_page('debt', 'list', $user);
     $dept_count = count($debts);
     $dept_count_t = sprintf('<div data-count="%d" class="notifications-count">%d</div>', $dept_count, $dept_count);
@@ -129,13 +129,13 @@ function ding_notifications_content_type_render($subtype, $conf, $panel_args, $c
  * Implements hook_content_type_edit_form().
  */
 function ding_notifications_content_type_edit_form($form, &$form_state) {
-  $options_array = array(
-    t('Loans'),
-    t('Ready to pickup'),
-    t('Reservations'),
-    t('Dept'),
+  $options = array(
+    'loans' => t('Loans'),
+    'ready_to_pickup' => t('Ready to pickup'),
+    'reservations' => t('Reservations'),
+    'dept' => t('Dept'),
   );
-  $options = drupal_map_assoc($options_array);
+
   $form['top_menu_items'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Select which elements to display'),
@@ -156,12 +156,12 @@ function ding_notifications_content_type_edit_form_validate($form, &$form_state)
  * Implements hook_content_type_edit_form_submit().
  */
 function ding_notifications_content_type_edit_form_submit($form, &$form_state) {
-  $options_array = array(
-    t('Loans'),
-    t('Ready to pickup'),
-    t('Reservations'),
-    t('Dept'),
+  $options = array(
+    'loans' => t('Loans'),
+    'ready_to_pickup' => t('Ready to pickup'),
+    'reservations' => t('Reservations'),
+    'dept' => t('Dept'),
   );
-  $options = drupal_map_assoc($options_array);
+
   $form_state['conf']['top_menu_items'] = !empty($form_state['values']['top_menu_items']) ? $form_state['values']['top_menu_items'] : $options;
 }
