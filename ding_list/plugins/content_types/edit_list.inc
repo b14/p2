@@ -10,7 +10,7 @@ $plugin = array(
   'description' => t('Edit list.'),
   'single' => TRUE,
   'content_types' => array('ding_type'),
-  'category' => t('Dinglist'),
+  'category' => t('Ding!'),
   'render callback' => 'ding_list_edit_list_content_type_render',
   'required context' => new ctools_context_required(t('Dinglist'), 'ding_type'),
 );

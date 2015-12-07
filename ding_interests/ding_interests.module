@@ -29,12 +29,14 @@ function ding_interests_menu() {
     'title' => 'Ding interests add to list',
     'page callback' => 'ding_interests_add_to_list_callback',
     'page arguments' => array(2, 3, 4, 5),
+    // TODO: A more specific access argument would be appropriate here
     'access arguments' => array('access content'),
   );
   $items['ding/interests/remove/%ctools_js/%taxonomy_term/%user'] = array(
-    'title' => 'Ding interests add to list',
+    'title' => 'Ding interests remove from list',
     'page callback' => 'ding_interests_remove_from_list_callback',
     'page arguments' => array(2, 3, 4, 5),
+    // TODO: A more specific access argument would be appropriate here
     'access arguments' => array('access content'),
   );
   $items['ding/interests/overview'] = array(
@@ -62,6 +64,7 @@ function ding_interests_permission() {
  * Implements hook_entity_info_alter().
  */
 function ding_interests_entity_info_alter(&$entity_info) {
+  // TODO Why is this needed?
   if (!isset($entity_info['taxonomy_term']['view modes']['teaser'])) {
     $entity_info['taxonomy_term']['view modes']['teaser'] = array(
       'label' => t('Teaser'),
@@ -85,6 +88,7 @@ function ding_interests_entity_info_alter(&$entity_info) {
 function ding_interests_secure_permissions($role) {
   $permissions = array(
     'local administrator' => array('administer ding interests'),
+    // TODO: There is no role in DDB CMS called developer
     'developer' => array('administer ding interests'),
   );
   if (isset($permissions[$role])) {
@@ -94,6 +98,8 @@ function ding_interests_secure_permissions($role) {
 
 /**
  * Implements hook_user_login().
+ *
+ * TODO This does not look like an implementation of hook_user_login?
  *
  * Synchronize with openlist, create missing lists and update the historical
  * loans list.
@@ -118,10 +124,13 @@ function ding_interests_ding_list_operations() {
  * Implements hook_ding_interaction_view().
  */
 function ding_interests_ding_interaction_view() {
+  // TODO: Should this be a check for a user with the provider role?
   if (user_is_logged_in()) {
+    // TODO Why is ctools ajax needed here?
     ctools_include('ajax');
     $interests_list = ding_list_get_list(DING_INTERESTS_LIST);
 
+    // TODO: What is this query doing here?
     // $result = db_query('SELECT
     // td.tid
     // FROM
@@ -143,6 +152,7 @@ function ding_interests_ding_interaction_view() {
     // Try to find the correct status tid.
     $status_voc = taxonomy_vocabulary_machine_name_load('interest_status');
     $status_terms = taxonomy_get_tree($status_voc->vid);
+    // TODO What are the hardcoded tid and name doing here?
     $status_tid = 60;
     foreach ($status_terms as $status_term) {
       if ($status_term->name == 'Udvalgt') {
@@ -150,6 +160,8 @@ function ding_interests_ding_interaction_view() {
       }
     }
 
+    // TODO: What is going on here? Could this be achieved by something less
+    // crude than db_query?
     $result = db_query("SELECT
   td.tid, IFNULL(fdfss.field_search_string_value, CONCAT('dc.subject=', td.name)) AS search_string, fv.field_value_value
 FROM
@@ -181,6 +193,7 @@ LIMIT 2", array(':list_id' => $interests_list->id, ':status_tid' => $status_tid)
       }
       $view .= '</div>';
 
+      // TODO: Please remove uncommented code if it is unneeded.
       // $view = views_embed_view('ding_interests');
 
       if ($view) {
@@ -195,6 +208,8 @@ LIMIT 2", array(':list_id' => $interests_list->id, ':status_tid' => $status_tid)
  * Implements hook_ding_interaction_info().
  */
 function ding_interests_ding_interaction_info() {
+  // TODO: Should this be a check for the provider role?
+  // Also: Is there any reason why this cannot be displayed for anonymous users?
   $active = user_is_logged_in();
   return array(
     'title' => t('Recommended subjects from the library staff'),
@@ -225,6 +240,8 @@ function ding_interests_preprocess_taxonomy_term(&$variables) {
     
     // Show the term if its part of "På baggrund af dine lån foreslår vi emneord".
     // And if the term is "Udvalgt", which is a field set on the term page.
+    // TODO If there are terms with special meaning then please ensure that
+    // they exist through an install hook.
     if ($status == 'Udvalgt' && drupal_is_front_page() || !drupal_is_front_page() || isset($variables['content']['show_anyway'])) {
       $account = $variables['user'];
       $link = l($variables['term_name'], "taxonomy/term/" . $variables['tid']);
@@ -249,6 +266,8 @@ function ding_interests_preprocess_taxonomy_term(&$variables) {
         $value = 'dc.subject=' . $term->name . '';
       }
       if (!ding_list_has_ding_list_element($list, 'taxonomy_term', $value)) {
+        // TODO There are lots of references to the 5 and 0 rating. Please
+        // extract them as constants.
         $interest_flag = ding_interests_ajax_button($term, $account, 5);
         $no_interest_flag = ding_interests_ajax_button($term, $account, 0);
         $variables['content']['ding_interest_interest_button'] = array(
@@ -319,19 +338,23 @@ function ding_interests_add_to_list_callback($ajax, $term_id, $account, $rating 
     }
 
     if ($rating > 0) {
+      // TODO This adds a dependency to ding_serendipity. This has not been
+      // declared.
       $commands[] = ding_serendipity_command_refresh(array('interest' => $term->tid, 'plugins' => array('ding_interests_materials')));
     }
     // Return output.
+    // TODO Please use ajax_deliver().
     print ajax_render($commands);
     exit;
   }
   else {
+    // TODO Is there really nothing we can do for non-AJAX requests?
     return '';
   }
 }
 
 /**
- * Ajax callback for the add to list button.
+ * Ajax callback for the remove from list button.
  *
  * @ajax boolean
  *   Indicates if this call is running through Ajax.
@@ -348,6 +371,8 @@ function ding_interests_remove_from_list_callback($ajax, $term, $account) {
   if ($ajax) {
 
     // Add to interests list.
+    // TODO Why do we call ding_interests_add_to_list() in a callback that
+    // should remove from a list?
     ding_interests_add_to_list($term, $account, $rating);
     // Get ajax button.
     $output = ding_interests_ajax_button($term, $account, $rating);
@@ -355,10 +380,12 @@ function ding_interests_remove_from_list_callback($ajax, $term, $account) {
     $identifier = '#taxonomy-term-' . $term->tid . ' .add-to-list';
     $commands[] = ajax_command_replace($identifier, $output);
     // Return output.
+    // TOOD Please use ajax_deliver().
     print ajax_render($commands);
     exit;
   }
   else {
+    // TODO Is there really nothing we can do for non-AJAX requests?
     return '';
   }
 }
@@ -372,11 +399,15 @@ function ding_interests_remove_from_list_callback($ajax, $term, $account) {
  *   The user to act on.
  * @rating number
  *   The rating to give the element.
+ *
+ * TODO Please document or change return values. These integers look odd.
  */
 function ding_interests_add_to_list($term, $account, $rating) {
   // Get the historical loan list.
   $list = ding_list_get_list(DING_INTERESTS_LIST, $account);
 
+  // TODO I see this snippet repeated several times in the codebase. Could
+  // this be refactored into a shared method?
   $value = ding_base_get_value('taxonomy_term', $term, 'field_search_string');
   if ($value === FALSE) {
     $value = 'dc.subject="' . $term->name . '"';
@@ -384,7 +415,6 @@ function ding_interests_add_to_list($term, $account, $rating) {
 
   if (!ding_list_has_ding_list_element($list, 'taxonomy_term', $value)) {
     $values = array(
-      // 'value' => $term->tid,
       'search_title' => $term->name,
       'value' => $value,
       'state' => ($rating > 0) ? 'yes' : 'no',
@@ -443,6 +473,7 @@ function ding_interests_ajax_button($term, $account, $rating = 5, $remove = FALS
  *
  * @param string $type
  *   The element type.
+ * TODO Please document the boolean default as well.
  *
  * @return array
  *   An array of elements.
@@ -473,6 +504,7 @@ function ding_interests_get_list_elements($type = FALSE) {
  *   Taxonomy term corresponding to the interest.
  */
 function ding_interests_get_random_interest_term($type = 'interests') {
+  // TODO The $type parameter is never used?
   $term = ding_interests_get_random_list_item();
   return $term;
 }
@@ -481,6 +513,7 @@ function ding_interests_get_random_interest_term($type = 'interests') {
  * Implements hook_user_complete().
  */
 function ding_interests_ding_user_complete() {
+  // TODO Unused variables and dead code here. Please fix or remove.
   $interests = ding_interests_get_random_list_item();
   $no_interest = ding_interests_get_random_list_item();
   // (!empty($interest) || !empty($no_interest));
@@ -514,6 +547,7 @@ function ding_interests_get_random_list_item() {
 
   // @TODO: add criteria to ding_list_load_elements so we dont have to load all
   // @TODO: add get random elements to ding_list
+  // TODO: Yes please - or separate loading of ids and entities here if possible
   $items = ding_list_load_elements($list);
   $buffer = array();
   foreach ($items as $item) {
@@ -593,6 +627,7 @@ function ding_interests_theme($existing, $type, $theme, $path) {
 
 /**
  * Todo: doc here.
+ * TODO Yes please
  */
 function template_preprocess_ding_interests_tree(&$variables) {
   $voc = taxonomy_vocabulary_machine_name_load('ding_content_tags');
@@ -687,6 +722,7 @@ function ding_interests_get_status_tids() {
   $tree = taxonomy_get_tree($vocab->vid);
   if (empty($tree)) {
     // Create the two terms granted and denied.
+    // TODO: This should be done at install time - not run time.
     $term = new stdClass();
     $term->name = 'Udvalgt';
     $term->vid = $vocab->vid;

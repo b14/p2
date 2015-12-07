@@ -9,6 +9,7 @@ $plugin = array(
   'title' => t('Ding interests: Overview'),
   'description' => '',
   'single' => TRUE,
+  // TODO Please remove dead code
   // 'content_types' => array('list'),
   // 'content_types' => array('taxonomy_term'),
   // 'required context' =>

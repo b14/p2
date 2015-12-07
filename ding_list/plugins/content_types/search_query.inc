@@ -32,6 +32,9 @@ function ding_list_search_query_content_type_render($subtype, $conf, $panel_args
 
   $title = $context->data;
 
+  // TODO Why is there a need to do this processing of the facet string?
+  // It seems like we are jumping through hooks to get
+  // drupal_get_query_parameters() again?
   $facet_list = explode('&', $facets);
   if (!empty($facet_list)) {
     foreach ($facet_list as & $facet) {

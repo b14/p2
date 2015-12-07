@@ -125,6 +125,7 @@ function ding_list_sync_openlist($account = NULL) {
       $local_list = &$list_map[$openlist_list['list_id']];
 
       // We only edit the list if its status is 1.
+      // TODO: Why? What does status = 1 mean.
       if ($openlist_list['status'] == 1) {
         if (!isset($openlist_list['data']['fields']) || !is_array($openlist_list['data']['fields'])) {
           $openlist_list['data']['fields'] = array();
@@ -139,6 +140,7 @@ function ding_list_sync_openlist($account = NULL) {
     // The list is not present in the local database, so we need to create it.
     else {
       // We only create the list, if it has the status of 1
+      // TODO See comment regarding why aboce.
       if ($openlist_list['status'] == 1) {
         if (!isset($openlist_list['data']['fields']) || !is_array($openlist_list['data']['fields'])) {
           $openlist_list['data']['fields'] = array();
@@ -173,6 +175,7 @@ function ding_list_sync_openlist($account = NULL) {
 
         $values = array();
         // Old openlist save method.
+        // TODO Why do we need to support the legacy mode?
         if (isset($openlist_element['data']['id'])) {
           $values = array(
             'value' => $openlist_element['data']['id'],
@@ -190,6 +193,7 @@ function ding_list_sync_openlist($account = NULL) {
           FALSE
         );
 
+        // TODO A comment explaining what is going on here would be nice.
         if ($openlist_element['previous'] > 0) {
           $previous_element = $element_map[$openlist_element['previous']];
         }
@@ -233,15 +237,16 @@ function ding_list_sync_openlist($account = NULL) {
         );
       }
     }
-    // The list is not present in the local database, so we need to create it.
+    // The element is not present in the local database, so we need to create it.
     else {
-      // We only create the list, if it has the status of 1
+      // We only create the element, if it has the status of 1
       if ($openlist_element['status'] == 1) {
         // Update the save_list, so we can save all the lists changed.
         $save_list[$openlist_element['list_id']] = $openlist_element['modified'];
 
         $values = array();
         // Old openlist save method.
+        // TODO: Why do we need to support the old method?
         if (isset($openlist_element['data']['id'])) {
           $values = array(
             'value' => $openlist_element['data']['id'],

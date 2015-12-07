@@ -3,4 +3,11 @@ description = Extend the message module with ding functionality
 package = Ding!
 version = "7.x-1.x-dev"
 core = 7.x
+; TODO Files is not needed here
 files[] = ding_message.module
+; TODO: Judging by the codebase this module has dependencies such as:
+; - message
+; - ding_list
+; - ting
+; - ding_message_p2_installer
+; Please add them

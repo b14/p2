@@ -5,8 +5,7 @@
  */
 ?>
  
-<div <?php
-if ($sortable !== FALSE): print 'ref="' . $sortable . '" '; endif; ?>class="<?php print $classes; ?>">
+<div <?php print ($sortable !== FALSE) ? 'ref="' . $sortable . '"' : ''; ?> class="<?php print $classes; ?>">
   <div class="ding-list-items">
     <?php print render($items); ?>
   </div>

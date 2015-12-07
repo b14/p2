@@ -88,6 +88,7 @@ function ding_list_p2_installer2_views_default_views() {
   $translatables['public_lists'] = array(
     t('Master'),
     t('Public lists'),
+    // TODO Please export these with English texts
     t('mere'),
     t('Udfør'),
     t('Gendan'),

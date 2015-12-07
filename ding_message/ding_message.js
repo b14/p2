@@ -4,10 +4,15 @@
  */
 
 (function ($) {
-  
+
+  // TODO If the behavior belongs to the ding_message module it should
+  // be called something with ding_message. The current name clashed with
+  // ding_interaction.
+  // TODO This behavior has no documentation. Please add code comments explaning
+  // what is going on and why.
   Drupal.behaviors.ding_interaction = {
     attach: function (context, settings) {
-      $('.ding-message a', context).each(function() {
+      $('.ding-message a, a.ding-message-link', context).each(function() {
         $(this).on('click',function(evt) {
           var $id = $(this).attr('data-item-id');
           $.ajax({
@@ -17,17 +22,8 @@
           });
         })
       });
-      $('a.ding-message-link', context).each(function() {
-        $(this).on('click',function(evt) {
-          var $id = $(this).attr('data-item-id');
-          $.ajax({
-            url: '/ding_message/status/change',
-            type: "POST",
-            data: { 'mid' : $id },
-          });
-        })
-      });      
-      var 
+
+      var
         isSet = false,
         latestId = get_url_parameter('message');
       if(latestId && $('.ting-object-collection', context).size() > 0) {

@@ -9,6 +9,8 @@ require_once __DIR__ . '/functions.openlist.inc';
 require_once __DIR__ . '/functions.handler.inc';
 
 if (!function_exists('ding_base_get_value')) {
+  // TODO: Judging by the name it is not the intent that these functions belong
+  // here. In that case please add a todo stating that they should be moved.
 
   /**
    * Get the first value of a field item.
@@ -53,6 +55,10 @@ if (!function_exists('ding_base_get_items')) {
  *   The value (most of the times this will be an entity object).
  * @param string $value_title
  *   Title of the element, which can override default titles.
+ *
+ * TODO Please document the return value.
+ * This function seems to do a lot of things. Could it be broken up into
+ * multiple smaller functions with a clearer scope?
  */
 function ding_list_get_add_to_list_data($type, $value, $value_title = FALSE) {
   global $user;
@@ -182,7 +188,7 @@ function ding_list_get_add_to_list_data($type, $value, $value_title = FALSE) {
  */
 function ding_list_share_token($list, $permission, $date = FALSE) {
   if ($date === FALSE) {
-    $date = time();
+    $date = REQUEST_TIME;
   }
 
   return md5('prefix_' . $list->id . '_' . $list->created . '_' . $permission . '_' . date('Ymd', $date));
@@ -828,6 +834,8 @@ function ding_list_get_permission_permissions($permission = FALSE) {
  *   List entity.
  * @param string $permission
  *   The permission to check against.
+ *   TODO The supported permissions should be documented.
+ *   One way to do this could be through constants.
  * @param object $account
  *   The user account.
  *
@@ -836,7 +844,7 @@ function ding_list_get_permission_permissions($permission = FALSE) {
  */
 function ding_list_user_has_access($list, $permission = 'view', $account = NULL) {
   $access = &drupal_static(__FUNCTION__, array());
-
+  // TODO adding a comment about what is going on here would be nice.
   $access_key = md5(serialize(func_get_args()));
   if (isset($access[$access_key])) {
     return $access[$access_key];
@@ -865,6 +873,9 @@ function ding_list_user_has_access($list, $permission = 'view', $account = NULL)
 
   if (!user_is_logged_in()) {
     if (isset($_GET['token'])) {
+      // TODO Adding a redirect is a surprising side effect for a function
+      // that should return a boolean. I would prefer if this logic was kept
+      // in the calling functions.
       drupal_goto('dinglist/login/' . $list->id);
     }
     $access[$access_key] = FALSE;
@@ -879,6 +890,7 @@ function ding_list_user_has_access($list, $permission = 'view', $account = NULL)
 
   // 3) Has Token.
   if (isset($_GET['token'])) {
+    // TODO Why is token not passed as an argument to the function?
     if ($account->uid > 0) {
       foreach (ding_list_get_permission_permissions() as $key => $array) {
         // A token only works 7 days, so create a token for each of the
@@ -908,7 +920,7 @@ function ding_list_user_has_access($list, $permission = 'view', $account = NULL)
  * @param object $list
  *   The list entity.
  *
- * @return string
+ * @return int
  *   The followers count.
  */
 function ding_list_get_list_followers_count($list) {

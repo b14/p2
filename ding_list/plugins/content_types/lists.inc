@@ -29,6 +29,7 @@ function ding_list_lists_content_type_render($subtype, $conf, $panel_args, $cont
     'specials' => array(
       'title' => t('Library user status'),
       'lists' => array(
+        // TODO Why are these not constants?
         'special_depts' => array(),
         'special_reservations' => array(),
         'special_loans' => array(),
@@ -72,6 +73,8 @@ function ding_list_lists_content_type_render($subtype, $conf, $panel_args, $cont
               break;
 
             case 'hardcoded':
+              // TODO This now adds an undeclared dependency to ding_message
+              // Can this be avoided to create a simpler dependency graph?
               $notifications = ding_message_get_ding_list_notification($list);
               $notout = '';
               if (!empty($notifications)) {
@@ -112,6 +115,7 @@ function ding_list_lists_content_type_render($subtype, $conf, $panel_args, $cont
     $uri = entity_uri('user', $account);
 
     // Loans.
+    // TODO Why not ding_provider_invoke?
     $count = count(ding_provider_invoke_page('debt', 'list', $account));
     $groups['specials']['lists']['special_depts'][] = array(
       'data' =>
@@ -137,7 +141,7 @@ function ding_list_lists_content_type_render($subtype, $conf, $panel_args, $cont
     );
   }
   catch (Exception $e) {
-    watchdog_exception('ding_list list pane', $e);
+    watchdog_exception('ding_list', $e);
   }
 
   // Remove groups with no list.

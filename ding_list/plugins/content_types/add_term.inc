@@ -11,7 +11,7 @@ $plugin = array(
   'single' => TRUE,
   'content_types' => array('taxonomy_term'),
   'required context' => new ctools_context_required(t('Term'), 'taxonomy_term'),
-  'category' => t('Dinglist'),
+  'category' => t('Ding!'),
   'render callback' => 'ding_list_add_term_content_type_render',
 );
 

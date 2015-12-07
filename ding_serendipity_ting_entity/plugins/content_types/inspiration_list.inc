@@ -7,18 +7,22 @@
 $plugin = array(
   'title' => t('General purpose ding_object serendipity panel'),
   'description' => t('Provide serendipity based a taxonomy term.'),
+  // TODO Please prefix callbacks with the module name.
   'admin info' => 'ding_serendipity_entity_inspiration_list_admin_info',
   'single' => TRUE,
   'edit form' => 'ding_serendipity_entity_inspiration_list_content_type_edit_form',
   'render callback' => 'ding_serendipity_entity_inspiration_list_content_type_render',
   'category' => t('Ding!'),
 );
+// TODO: Perhaps this belongs in the ding_serendipity module ifself?
+// Other similar panes are placed there as well - not in ding_serendipity_nodes.
 
 /**
  * Returns a summary for the administration information in panels.
  */
 function ding_serendipity_entity_inspiration_list_admin_info($subtype, $conf, $context) {
   $output = new stdClass();
+  // TODO Consider code reuse here.
   $output->title = t('Serendipity inspiration list');
   $output->content = t('Serendipity content. View mode: @view_mode', array('@view_mode' => $conf['view_mode'])) . '<br/>';
   $output->content .= t('Sort by weight: @sort_weight', array('@sort_weight' => $conf['sort_weight'])) . '<br/>';
@@ -63,6 +67,7 @@ function ding_serendipity_entity_inspiration_list_content_type_render($subtype, 
   $context = array(
     'entity_type' => 'ding_object',
     'bundle' => 'ding_object',
+    // TODO: Why do we use an argument here instead of a context?
     'ting_object_id' => $args[0],
     'view_mode' => !empty($conf['view_mode']) ? $conf['view_mode'] : 'big_teaser',
     'sort_weight' => !empty($conf['sort_weight']) ? $conf['sort_weight'] : FALSE,
@@ -73,6 +78,7 @@ function ding_serendipity_entity_inspiration_list_content_type_render($subtype, 
 
   $limit = !empty($conf['limit']) ? $conf['limit'] : 4;
   $content = array(
+    // TODO This theme entry does not seem to appear anywhere in the codebase?
     '#theme' => 'ding_tabs',
     '#name' => 'related_material',
     '#title' => t('Related material'),

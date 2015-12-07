@@ -4,7 +4,13 @@
  * @file
  * Ding Serendipity CTools plugin file.
  */
- 
+
+// TODO See comments from other panel panes regarding:
+// - Documentation of the purpose of the panel pane
+// - Code reuse
+// - Handling of override_title
+// etc.
+
 $plugin = array(
   'title' => t('Ding serendipity with TingObject'),
   'description' => t('Display serendipity content of type the ting object.'),
@@ -39,10 +45,12 @@ function ding_serendipity_serendipity_ting_object_admin_info($subtype, $conf, $c
  */
 function ding_serendipity_serendipity_ting_object_content_type_render($subtype, $conf, $panel_args, $context) {
   // Only show on front if activated.
-  if(drupal_is_front_page() && !variable_get('ding_frontpage_serendipity') && variable_get('ding_frontpage_promoter') != 'serendipity') {
+  // TODO This should be handled with visibility settings for more flexibility.
+  if (drupal_is_front_page() && !variable_get('ding_frontpage_serendipity') && variable_get('ding_frontpage_promoter') != 'serendipity') {
     return;
   }
-  
+
+  // See comments regarding code reuse from other panel panes.
   $context_data = array();
   if (isset($conf['selected_keys'])) {
     foreach ($conf['selected_keys'] as $key => $value) {
@@ -82,6 +90,7 @@ function ding_serendipity_serendipity_ting_object_content_type_render($subtype, 
 
   $output = array();
   if (!empty($content)) {
+    // TODO Add elements using #attached.
     $path = drupal_get_path('module', 'ding_serendipity');
     
     drupal_add_css($path . '/css/ding_serendipity.css');

@@ -11,7 +11,7 @@ $plugin = array(
   'single' => TRUE,
   'content_types' => array('user'),
   'required context' => new ctools_context_required(t('User'), 'user'),
-  'category' => t('Dinglist'),
+  'category' => t('Ding!'),
   'render callback' => 'ding_list_add_user_content_type_render',
 );
 
@@ -22,7 +22,8 @@ function ding_list_add_user_content_type_render($subtype, $conf, $panel_args, $c
   global $user;
   
   $account = $context->data;
-  
+
+  // TODO: Users cannot add themselves to a list?
   if ($account->uid == $user->uid) {
     return FALSE;
   }

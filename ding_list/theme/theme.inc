@@ -6,6 +6,8 @@
 
 /**
  * Add an entity to the list.
+ * TODO What is this function doing here? It does not seem theme related
+ * and I cannot find anywhere it is being called.
  */
 function ding_list_add_to_list($lid, $content) {
   // @todo validate input
@@ -32,6 +34,7 @@ function theme_ding_list_permission_description($variables) {
  */
 function template_preprocess_ding_list_list(&$variables) {
   if ($variables['toggler'] === TRUE) {
+    // TODO If this is really unused then please uncomment.
     // $variables['toggler'] = array('#theme' => 'ding_list_mode_toggler');
   }
 
@@ -44,6 +47,7 @@ function template_preprocess_ding_list_list(&$variables) {
  * Add button.
  */
 function template_preprocess_ding_list_add_button(&$variables) {
+  // TODO: Could this be added to #attached in a render array?
   drupal_add_library('system', 'drupal.ajax');
   drupal_add_js(drupal_get_path('module', 'ding_list') . '/js/ding-list-add-button.js');
   drupal_add_css(drupal_get_path('module', 'ding_list') . '/css/ding-list-add-button.css');
@@ -138,7 +142,9 @@ function theme_ding_list_followers($variables) {
   if ($variables['note'] !== FALSE) {
     $out .= '<div class="ding-list-note">' . $variables['note'] . '</div>';
   }
-  
+
+  // TODO Outputting the elements seem odd compared when the function is
+  // dealing with followers.
   if ($variables['no_objects']) {
     $out .= '<div class="ding-list-no-elements">' . t('No elements in this list.') . '</div>';
   }
@@ -151,7 +157,8 @@ function theme_ding_list_followers($variables) {
  * Ding list lists preprocessor.
  */
 function template_preprocess_ding_list_lists(&$variables) {
-  
+  // TODO: If it is intentional that this function should do nothing then at
+  // least add a comment explaining why it is defined.
 }
 
 /**
@@ -163,6 +170,8 @@ function theme_ding_list_lists($variables) {
   foreach ($variables['groups'] as $group_name => $group) {
     $rows = array();
 
+    // TODO: Why is sorting done here. It seems it might as well be done
+    // directly where group is defined before passing it to the theme function.
     if (isset($group['sort']) && function_exists($group['sort'])) {
       uasort($group['lists'], $group['sort']);
     }
@@ -170,6 +179,7 @@ function theme_ding_list_lists($variables) {
     foreach ($group['lists'] as $lists) {
       foreach ($lists as $list) {
         // Remove the #list reference.
+        // TODO: Why?
         unset($list['#list']);
         $rows[] = $list;
       }
@@ -193,6 +203,7 @@ function theme_ding_list_lists($variables) {
     'type' => 'ul',
     'attributes' => array('class' => array('bottom-links')),
   ));
-  
+
+  // TODO: Should this class be prefixed with ding?
   return '<div class="user-lists">' . $out . '</div>';
 }

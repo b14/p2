@@ -53,6 +53,11 @@ function ding_list_remove_element_form_submit($form, &$form_state) {
 
 /**
  * Add an element to a list.
+ *
+ * TODO Please document function parameters here. Parameters seem very generic.
+ * I would have expected the function to take at least a list and/or an element
+ * as parameters.
+ * The $extra_data parameter is never used?
  */
 function ding_list_add_element_form($form, &$form_state, $type, $value, $title = 'Dinglist', $extra_data = '') {
   if (is_array($type)) {
@@ -60,6 +65,8 @@ function ding_list_add_element_form($form, &$form_state, $type, $value, $title =
   }
 
   // Allow for translatable list titles.
+  // TODO: This is not good for extracting translatable strings. The callee
+  // should wrap the string in t().
   $submit_title = t($title);
   $options = ding_list_get_add_to_list_data($type, $value);
   if (count($options) > 1) {
@@ -86,6 +93,9 @@ function ding_list_add_element_form($form, &$form_state, $type, $value, $title =
     );
 
     // Allow for translatable list titles.
+    // TODO As above regarding translateability. It also increases coupling
+    // to the caller as that function now must be aware of this substitution
+    // when setting the value.s
     $submit_title = t($title, array('@list' => $list['title']));
   }
 
@@ -98,6 +108,7 @@ function ding_list_add_element_form($form, &$form_state, $type, $value, $title =
     ),
   );
 
+  // TODO Could we just use the default submit handler name here?
   $form['#submit'] = array('ding_list_add_element_submit');
 
   return $form;
@@ -141,6 +152,7 @@ function ding_list_add_element_submit($form, &$form_state) {
     }
 
     if ($element !== FALSE) {
+      // TODO: Should the response be set as message if we are not using AJAX?
       $form_state['storage']['response_html'] = t('Added to !name', array('!name' => l($list->title, 'list/' . $list->id)));
     }
     else {
@@ -191,6 +203,9 @@ function ding_list_create_list_form($form, &$form_state, $existing = FALSE) {
 
         $tmp = confirm_form(
           $form,
+          // TODO Plese use a valid question. Even though it may not be used
+          // there is no need to risk our debugging information in front of the
+          // user at some point.
           'the question is not used?',
           current_path(),
           t('Do you really want to delete !list?', array('!list' => $existing->title))
@@ -222,13 +237,14 @@ function ding_list_create_list_form($form, &$form_state, $existing = FALSE) {
     );
 
     if ($existing) {
-      $form['actions']['add_list'] = array(
+      // TODO is there no need for an access check here?
+      $form['actions']['edit_list'] = array(
         '#type' => 'submit',
         '#value' => t('Edit list'),
       );
 
       if (ding_list_allowed($existing, DING_LIST_OPERATION_DELETE)) {
-        $form['actions']['delte_list'] = array(
+        $form['actions']['delete_list'] = array(
           '#type' => 'submit',
           '#value' => t('Delete list'),
           '#submit' => array('ding_list_create_list_form_submit_delete'),
@@ -249,6 +265,7 @@ function ding_list_create_list_form($form, &$form_state, $existing = FALSE) {
       '#limit_validation_errors' => array(),
     );
 
+    // TODO Please add a comment explainin what is going on here and why.
     if (isset($_GET['at'])) {
       $form['auto_add_type'] = array(
         '#type' => 'hidden',
@@ -397,18 +414,6 @@ function ding_list_list_permissions_form($form, $form_state, $list = FALSE) {
     ),
   );
 
-  $form['mail_sharer'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Share'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#states' => array(
-      'visible' => array(
-        ':input[name="status"]' => array('value' => 'shared'),
-      ),
-    ),
-  );
-  
   $permission_options = array(
     'view' => t('Allow to view this list'),
     'edit' => t('Allow to view and edit this list'),
@@ -418,11 +423,6 @@ function ding_list_list_permissions_form($form, $form_state, $list = FALSE) {
     '#type' => 'select',
     '#title' => t('Select which type of access to share'),
     '#options' => $permission_options,
-  );
-  
-  $form['mail_sharer']['email'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Send invitation to this email adress:'),
   );
 
   // Setup the share link, with the correct token.
@@ -440,6 +440,23 @@ function ding_list_list_permissions_form($form, $form_state, $list = FALSE) {
       ),
     );
   }
+
+  $form['mail_sharer'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Share'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="status"]' => array('value' => 'shared'),
+      ),
+    ),
+  );
+
+  $form['mail_sharer']['email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Send invitation to this email adress:'),
+  );
 
   $form['mail_sharer']['share'] = array(
     '#type' => 'submit',
@@ -501,7 +518,9 @@ function ding_list_list_permissions_form($form, $form_state, $list = FALSE) {
       );
     }
   }
-  
+
+  // TODO: Are there no non-AJAX submit handlers?
+
   return $form;
 }
 
@@ -615,7 +634,7 @@ function ding_list_list_permissions_form_share_callback($form, &$form_state) {
     ));
 
   // Get generated message.
-  $html = theme('ding_list_message', array('message' =>  t('Mail send')));
+  $html = theme('ding_list_message', array('message' =>  t('Mail sent')));
   // Popup.
   $response['#commands'][] = ajax_command_ding_popup('ding_list', t('Share'), $html);
 

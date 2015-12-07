@@ -5,6 +5,12 @@
  * Ding Serendipity CTools plugin file.
  */
 
+// TODO See comments from other panel panes regarding:
+// - Documentation of the purpose of the panel pane
+// - Code reuse
+// - Handling of override_title, #attached.
+// etc.
+
 $plugin = array(
   'title' => t('Ding serendipity with TingObject Related'),
   'description' => t('Display serendipity content of type the ting object.'),

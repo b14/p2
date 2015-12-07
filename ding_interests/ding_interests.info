@@ -3,6 +3,7 @@ description = Allows users to select subjects/genres/materialtypes which they li
 package = Ding!
 version = "7.x-1.x-dev"
 core = 7.x
+; TODO: Module file does not need to be delcared as a file.
 files[] = ding_interests.module
 files[] = views/ding_interests_handler_filter_interests.inc
 files[] = views/ding_interests_handler_relationships.inc
@@ -26,4 +27,3 @@ features[field_instance][] = taxonomy_term-ding_content_tags-field_status
 features[field_instance][] = taxonomy_term-ding_content_tags-field_title_image
 features[views_view][] = ding_user_interests
 features[views_view][] = ding_interests
-//configure = admin/config/ding/interests

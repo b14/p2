@@ -35,9 +35,14 @@ function ding_notifications_admin_info($subtype, $conf, $context) {
 function ding_notifications_content_type_render($subtype, $conf, $panel_args, $context) {
   global $user;
 
+  // TODO: Page manager already have a caching system. Why not use that?
+  // If we do not use that then avoiding tying the cache name to the function
+  // name would be good - especially if we need to access these cache entries
+  // outside of this function.
   $cache_key = __FUNCTION__ . ':' . md5($user->uid . serialize($conf));
   $cache = cache_get($cache_key);
 
+  // TODO What is going on here with the arg() checking?
   if (isset($cache->expire) && $cache->expire > time() && arg(0) != 'user') {
     return $cache->data;
   }
@@ -53,7 +58,6 @@ function ding_notifications_content_type_render($subtype, $conf, $panel_args, $c
   $content = array();
   $default = array(1, 2, 3, 4);
   $defaults = (isset($conf['top_menu_items'])) ? $conf['top_menu_items'] : $default;
-  // Get debts count.
   $uri = entity_uri('user', $user);
 
   if (module_exists('ding_message')) {
@@ -74,12 +78,16 @@ function ding_notifications_content_type_render($subtype, $conf, $panel_args, $c
   }
 
   if (isset($defaults['ready_to_pickup'])) {
+    // TODO Why not use ding_provider_invoke here?
     $ready_to_pickup = ding_provider_invoke_page('reservation', 'list', $user, DING_RESERVATION_READY);
     $ready_to_pickup_count = count($ready_to_pickup);
+    // TODO Is any styling missing here? I cannot spont any declarations of
+    // notifications-* classes.
     $classes = 'icon-folder-open notifications-pickup';
     if (!$ready_to_pickup_count) {
       $classes .= ' empty';
     }
+    // TODO
     $ready_to_pickup_count_t = sprintf('<div data-count="%d" class="notifications-count">%d</div>', $ready_to_pickup_count, $ready_to_pickup_count);
     $attr = array(
       'html' => TRUE,
@@ -92,6 +100,7 @@ function ding_notifications_content_type_render($subtype, $conf, $panel_args, $c
   }
 
   if (isset($defaults['dept'])) {
+    // TODO Why not use ding_provider_invoke here?
     $debts = ding_provider_invoke_page('debt', 'list', $user);
     $dept_count = count($debts);
     $dept_count_t = sprintf('<div data-count="%d" class="notifications-count">%d</div>', $dept_count, $dept_count);
@@ -129,6 +138,9 @@ function ding_notifications_content_type_render($subtype, $conf, $panel_args, $c
  * Implements hook_content_type_edit_form().
  */
 function ding_notifications_content_type_edit_form($form, &$form_state) {
+  // TODO The options are duplicated. We can do better than that.
+  // TODO The form defines 4 options but only two seems to be implemented.
+  // Why is that?
   $options = array(
     'loans' => t('Loans'),
     'ready_to_pickup' => t('Ready to pickup'),

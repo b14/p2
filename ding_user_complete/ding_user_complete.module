@@ -62,6 +62,7 @@ function ding_user_complete_permission() {
 function ding_user_complete_secure_permissions($role) {
   $permissions = array(
     'local administrator' => array('administer ding user complete'),
+    // TODO DDB CMS has no developer role.
     'developer' => array('administer ding user complete'),
   );
   if (isset($permissions[$role])) {
@@ -98,6 +99,8 @@ function ding_user_complete_theme($existing, $type, $theme, $path) {
 /**
  * Defines a hook that allow other modules to create user completeness points.
  */
+// TODO This should be renamed from hook to info for consistency with other
+// functions.
 function ding_user_complete_hook() {
   // Get all point statuses provided by hook_user_complete_points()
   $modules = module_invoke_all('ding_user_complete');
@@ -160,6 +163,7 @@ function ding_user_complete_ding_interaction_view() {
     if (empty($data['markup'])) {
       return '';
     }
+    // TODO What is going on with the random here?
     $markup = $data['markup'][array_rand($data['markup'], 1)];
     if (!$markup['markup']) {
       return '';

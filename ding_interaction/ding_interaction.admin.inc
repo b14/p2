@@ -13,6 +13,8 @@ function ding_interaction_admin_overview($form, &$form_state) {
   $form['ding_interaction_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Ding interaction settings'),
+    // TODO Is there any reason behind these weights? Is it not sufficient to
+    // render them in the order they are added?
     '#weight' => 5,
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
@@ -21,28 +23,7 @@ function ding_interaction_admin_overview($form, &$form_state) {
     '#type' => 'select',
     '#title' => t('Page count'),
     '#description' => t('Set the amount of page views between ding interaction displays'),
-    '#options' => array(
-      1 => '1',
-      2 => '2',
-      3 => '3',
-      4 => '4',
-      5 => '5',
-      6 => '6',
-      7 => '7',
-      8 => '8',
-      9 => '9',
-      10 => '10',
-      11 => '11',
-      12 => '12',
-      13 => '13',
-      14 => '14',
-      15 => '15',
-      16 => '16',
-      17 => '17',
-      18 => '18',
-      19 => '19',
-      20 => '20',
-    ),
+    '#options' => range(1, 20),
     '#default_value' => variable_get('ding_interaction_page_count', 5),
     '#required' => TRUE,
   );
@@ -69,7 +50,7 @@ function ding_interaction_admin_overview($form, &$form_state) {
         'data' => array(
           '#type' => 'select',
           '#title' => '',
-          '#options' => drupal_map_assoc(ding_interaction_weight_options()),
+          '#options' => range(0, 5),
           '#value' => (isset($weights[$key])) ? array($weights[$key]) : array($weight),
           '#description' => t('Choose a weight for this interaction function.'),
           '#name' => 'ding_interaction_weights[' . $key . ']',
@@ -77,12 +58,11 @@ function ding_interaction_admin_overview($form, &$form_state) {
       ),
       'settings' => '',
     );
-    if (isset($value['settings']) && $value['settings']) {
-      $settings = $value['settings'];
+    if (!empty($value['settings'])) {
       $form['ding_interaction_callbacks']['#options'][$key]['settings'] = array(
         'data' => l(
           t('Settings'),
-          'admin/config/ding/interaction/key_overview/' . $settings,
+          'admin/config/ding/interaction/key_overview/' . $value['settings'],
           array('query' => array('destination' => 'admin/config/ding/interaction/key_overview'))
         ),
       );
@@ -91,6 +71,7 @@ function ding_interaction_admin_overview($form, &$form_state) {
   $form['ding_interaction_weights'] = array(
     '#type' => 'value',
   );
+
   $form['ding_interaction_help'] = array(
     '#type' => 'fieldset',
     '#title' => t('Ding interaction help'),
@@ -179,12 +160,3 @@ function ding_interaction_process_options($element) {
   return $element;
 }
 
-/**
- * Default options for weight.
- *
- * @return array
- *   Array of default options (0 through 5)
- */
-function ding_interaction_weight_options() {
-  return array(0, 1, 2, 3, 4, 5);
-}

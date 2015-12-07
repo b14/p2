@@ -70,8 +70,12 @@ function ding_list_attach_element_callback($type, $list_id, $value) {
  * @return array
  *   Ajax commands, with information about the process.
  */
+// TODO This seems to be a callback. I would appreciate naming it as such.
 function ding_list_remove_element_from_list($list_id, $element_id) {
   $list = ding_list_get_list($list_id);
+  // TODO Getting the html id in each of these methods involve retrieving a
+  // query parameter and do nothing to check whether it is defined etc.
+  // Is this standard way of doing this? Could we wrap it to make it a bit nicer?
   $context = drupal_get_query_parameters();
   if (ding_list_detach_ding_list_element($list, explode(',', $element_id)) !== FALSE) {
     $html = t('Removed from !name', array('!name' => l($list->title, 'user/list/' . $list->id)));
