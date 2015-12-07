@@ -34,6 +34,8 @@ function ting_openlist_settings_form($form, &$form_state) {
   $form['settings']['ting_openlist_prefix'] = array(
     '#type' => 'textfield',
     '#title' => t('Openlist prefix'),
+    // TODO Please add a description here. Without any formal documentation
+    // its it the best we can get.
     '#description' => '',
     '#default_value' => variable_get('ting_openlist_prefix', uniqid()),
     '#required' => TRUE,
@@ -73,7 +75,9 @@ function ting_openlist_settings_form($form, &$form_state) {
     '#description' => t('Log requests send to the openlist service.'),
     '#default_value' => variable_get('ting_openlist_log', FALSE),
   );
-  
+
+  // TODO Why is there a need for two levels of debugging? Other similar modules
+  // in this project only have one.
   $form['debugging']['ting_openlist_log_details'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable detailed logging'),

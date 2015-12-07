@@ -76,6 +76,8 @@ function ding_serendipity_serendipity_content_type_render($subtype, $conf, $pane
   }
   
   $block = new stdClass();
+  // TODO Respecting override_title should not be necesary here. Panels
+  // should take care of that.
   $block->title = ($conf['override_title']) ? $conf['override_title_text'] : t('Serendipity content');
   $block->content = $output;
   return $block;
@@ -91,12 +93,17 @@ function ding_serendipity_serendipity_content_type_edit_form($form, &$form_state
   $info = ding_serendipity_get_info();
   $options = array();
   foreach ($info as $key => $value) {
+    // TODO: keys does not seem to be a declared part of the return value in
+    // ding_serendipity.api.inc. Please document it.
     foreach ($value['keys'] as $serendipity_key) {
       if (!isset($options[$serendipity_key])) {
         $options[$serendipity_key] = $serendipity_key;
       }
     }
   }
+
+  // TODO Related to the komment above: I do not understand what keys mean here.
+  // It is a very generic term. Could this be elaborated?
   $form['selected'] = array(
     '#type' => 'select',
     '#title' => t('Selected'),
@@ -113,18 +120,24 @@ function ding_serendipity_serendipity_content_type_edit_form($form, &$form_state
  * Implements hook_content_type_edit_form_submit().
  */
 function ding_serendipity_serendipity_content_type_edit_form_submit($form, &$form_state) {
+  // TODO How abour adding ding_serendipity_form_base_submit as a submit handler
+  // for ding_serendipity_form_base()?
   ding_serendipity_form_base_submit($form_state);
   $form_state['conf']['selected'] = !empty($form_state['values']['selected']) ? $form_state['values']['selected'] : FALSE;
 }
 
 /**
  * Setup a base form for serendipity ctools content types.
+ * TODO: If this is a reusable form then please move it to a shared file e.g.
+ * ding_serendipity.module.
  */
 function ding_serendipity_form_base($form_state) {
   $form['view_mode'] = array(
     '#type' => 'select',
     '#title' => t('Selected'),
     '#options' => array(
+      // TODO Where does this list come from? Could it be extracted through
+      // code or otherwise documented?
       'full' => t('Full'),
       'teaser' => t('Teaser'),
       'big_teaser' => t('Big teaser'),

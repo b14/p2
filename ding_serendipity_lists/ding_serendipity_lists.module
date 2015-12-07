@@ -13,6 +13,7 @@ function ding_serendipity_lists_form_ding_frontpage_admin_settings_alter(&$form,
   $form['ding_serendipity_lists'] = array(
     '#type' => 'fieldset',
     '#title' => t('Ding serendipity lists front page settings'),
+    // TODO What is the point of this field?
     '#weight' => 5,
     '#collapsible' => FALSE,
     '#collapsed' => FALSE,
@@ -54,8 +55,12 @@ function ding_serendipity_lists_serendipity_info() {
     'author_from_lists' => array(
       'title' => t('Objects matching random author from lists'),
       'description' => t('Objects matching random author from lists. Combined with tid'),
+      // TODO: What does "Combined with tid" mean?
       'keys' => array('ting_object', 'frontpage'),
     ),
+    // TODO: Since these functions are obsolete it would be good to have them
+    // contained in a separate module which does not have to be enabled on future
+    // sites and can be deleted once we drop backwards compatibility.
     'followed_terms_nodes' => array(
       'title' => t('p1 / obsolete / Nodes matching followed terms'),
       'description' => t('Nodes matching followed terms. Filter by <em>bundle</em>'),
@@ -73,6 +78,7 @@ function ding_serendipity_lists_serendipity_info() {
 
 /**
  * Implements hook.
+ * TODO This is a callback - not a hook?
  */
 function ding_serendipity_lists_ting_objects_adhr_serendipity_add($context) {
   global $user;
@@ -85,6 +91,7 @@ function ding_serendipity_lists_ting_objects_adhr_serendipity_add($context) {
 
   // Get the element ids, values and weights from all the elements in the
   // ratings list.
+  // TODO: This adds a dependency to the rating system?
   $query = db_select('eck_ding_type', 'l');
   $query->join(
     'field_data_field_list_type', 'fdflt',
@@ -115,6 +122,7 @@ function ding_serendipity_lists_ting_objects_adhr_serendipity_add($context) {
   $five_ids = array();
   $item_ids = array();
   foreach ($query->execute()->fetchAll() as $row) {
+
     if ($row->field_weight_value == 5) {
       $five_ids[] = $row->field_list_objects_target_id;
     }
@@ -122,12 +130,14 @@ function ding_serendipity_lists_ting_objects_adhr_serendipity_add($context) {
   }
 
   // Select 4 random ids of all the rated objects.
+  // TODO: Why 4?
   shuffle($five_ids);
-  $five_ids = array_splice($five_ids, 0, 4);
+  $five_ids = array_slice($five_ids, 0, 4);
   $buffer = entity_load('ding_type', $five_ids);
   
   // Get other suggestions from openlist.
   foreach ($buffer as $item) {
+    // TODO: What does the value actually represent at this point?
     $value = ding_list_get_list_element_value($item);
     try {
       $openlist_items = ding_provider_invoke('openlist', 'request', 'callModule', array(
@@ -140,6 +150,9 @@ function ding_serendipity_lists_ting_objects_adhr_serendipity_add($context) {
       foreach ($openlist_items as $openlist_item) {
         $id = ding_list_convert_cql($openlist_item);
         if (!in_array($id, $item_ids)) {
+          // TODO If each result only contain two values why is this not a map
+          // of value to id? This could make the subsequent code clearer.
+          // Otherwise please use string keys.
           $results[] = array(
             $id,
             $value,
@@ -211,10 +224,13 @@ function ding_serendipity_lists_loan_adhl_serendipity_add($context) {
   $results = array();
 
   // Only provider users has current loans.
+  // TODO What does this have to do with path checking?
   if (!ding_user_is_provider_user($user) || strpos($context['path'], 'taxonomy/term') !== FALSE) {
     return $results;
   }
 
+  // TODO Please use ding_provider_invoke
+  // This creates a dependency to ding_provider. This is not declared.
   $loans = ding_provider_invoke_page('loan', 'list', $user);
 
   if (empty($loans)) {
@@ -226,23 +242,22 @@ function ding_serendipity_lists_loan_adhl_serendipity_add($context) {
       $ting_object_id = ding_list_get_list_element_value($element);
       // @todo: Brond3 specs.
       $conv_id = ding_list_convert_cql($ting_object_id);
+      // TODO Is the intent here to create a fake DingProviderLoan object?
+      // If so why not create an actual instance of the class?
       $loan = new stdClass();
       $loan->ding_entity_id = $conv_id;
       $loans[] = $loan;
     }
   }
 
-  if (!empty($loans) && $loans) {
+  if (!empty($loans)) {
     // Pick max 3 random current loans.
-    $amount = count($loans);
-    $rand_count = ($amount > 3) ? 3 : $amount;
-    $randoms = array_rand($loans, $rand_count);
-
-    if (!is_array($randoms)) {
-      $randoms = array($randoms);
-    }
+    // TODO Why 3?
+    $randoms = (array) array_rand($loans, min(count($loans), 3));
 
     foreach ($randoms as $random) {
+      // TODO Will this work for provider loan lists? ding_entity_id is not
+      // a public property for DingProviderLoan.
       $obj = ding_entity_load($loans[$random]->ding_entity_id, 'ting_object');
       if (!empty($obj)) {
         $isbn = $obj->getIsbn();
@@ -257,6 +272,7 @@ function ding_serendipity_lists_loan_adhl_serendipity_add($context) {
            * @TODO: Later. Create the ting_object id correct instead of hardcoded
            *        "870970-basis:", but ding_provider_build_entity_id doesn't
            *        work.
+           * TODO: Why is this?
            */
           $agency = '870970-basis:';
           if (!empty($recommendations)) {
@@ -301,11 +317,15 @@ function ding_serendipity_lists_author_from_lists_serendipity_add($context) {
   // Fetch author.
   if ($ting_entity) {
     $author = $ting_entity->getCreators();
+    // TODO: How can getCreators return FALSE? It always returns an array.
     if ($author == FALSE) {
       return array();
     }
+    // TODO Why is only the first author checked?
     $terms[] = 'facet.creator="' . $author[0] . '"';
     // Taxonomy terms except frontpage has a subject.
+    // TODO Please explain why this is added? Does searching directly on the
+    // other yield too broad results?
     if ($context['frontpage'] !== "1" && isset($context['taxonomy_tid'])) {
       $term = taxonomy_term_load($context['taxonomy_tid']);
 
@@ -349,6 +369,7 @@ function ding_serendipity_lists_author_from_lists_serendipity_add($context) {
 function ding_serendipity_lists_followed_terms_nodes_serendipity_add($context) {
   global $user;
 
+  // TODO: Why is this not relevant on the frontpage?
   if (!user_is_logged_in() || empty($context['bundle']) || !$context['frontpage']) {
     return array();
   }
@@ -362,6 +383,8 @@ function ding_serendipity_lists_followed_terms_nodes_serendipity_add($context) {
       'type' => 'node',
       'id' => $nid,
       'info' => array(
+        // TODO If this is reaching the end user then elements like node and term
+        // seem too technical?
         'description' => t('This node is displayed because of the terms you are following.'),
       ),
     );
@@ -382,6 +405,7 @@ function ding_serendipity_lists_followed_terms_nodes_serendipity_add($context) {
 function ding_serendipity_lists_followed_terms_ting_objects_serendipity_add($context) {
   global $user;
 
+  // TODO: Why is this not relevant on the frontpage or on ting_objects?
   if (!user_is_logged_in() || empty($context['bundle']) || $context['bundle'] != 'ting_object' || !$context['frontpage']) {
     return array();
   }
@@ -404,6 +428,9 @@ function ding_serendipity_lists_followed_terms_ting_objects_serendipity_add($con
     }
   }
   else {
+    // TODO Why do we fall back to the frontpage seach if there is no term
+    // available? I would expect that we let other serendipity plugins
+    // contribute instead.
     if ($search_string = variable_get('ding_frontpage_serendipity_search_string', '')) {
       $query = $search_string;
     }
@@ -413,6 +440,7 @@ function ding_serendipity_lists_followed_terms_ting_objects_serendipity_add($con
     $query,
     array(
       'shuffle' => TRUE,
+      // TODO Why is 4 the limit here?
       'limit' => 4,
     )
   );
@@ -420,6 +448,9 @@ function ding_serendipity_lists_followed_terms_ting_objects_serendipity_add($con
   // Append source info.
   foreach ($results as & $item) {
     $item['info'] = array(
+      // TODO: This will fail if a term could not be loaded. See also comment
+      // above.
+      // TODO: Should term be uppercase here?
       'Term' => $term->name,
       'description' => t('This material is displayed because of the you are following !term.', array('!term' => $term->name)),
     );

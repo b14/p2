@@ -10,10 +10,11 @@
  */
 function ding_user_consent_form($form, &$form_state) {
   // If consent longer than 30 days is disabled, ignore the form below:
-  if(!variable_get('user_consent_activate')) {
+  if (!variable_get('user_consent_activate')) {
     return;
   }
-  
+
+  // TODO We include the file where the form is defined. Why is this needed?
   form_load_include($form_state, 'inc', 'ding_user_consent', 'ding_user_consent.pages');
   if (!empty($form['#user'])) {
     $account = $form['#user'];

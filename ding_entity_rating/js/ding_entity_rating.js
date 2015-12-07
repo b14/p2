@@ -19,7 +19,7 @@
     _create: function() {
       this.element
         // Add a class for theming.
-        .addClass( "ding-rating" )
+        .addClass('ding-rating')
         // Prevent double click to select text.
         .disableSelection();
       if(this.options.submitted === false) {
@@ -42,6 +42,7 @@
      * @param Event evt
      *   Mouseenter event
      */
+      // TODO: Should this be startMouseIn?
     starMouseIn: function(evt) {
       var $this = $(this);
       $this.parent().children('.submitted').addClass('has-sub').removeClass('submitted');
@@ -82,6 +83,8 @@
       $this.addClass('submitted');
       $this.prevAll().addClass('submitted');
       $this.nextAll().removeClass('submitted');
+      // TODO Why not put the entire path as the data attribute? This
+      // avoids spreading paths acrosss JS and Drupal code.
       var _path = $this.parent().attr('data-ding-entity-rating-path'),
         _index = $this.index() + 1;
       $.get('/ding_entity_rating/ajax/' + _path + '/' + _index, function(responseText) {

@@ -11,6 +11,9 @@
 function ding_messages_admin_user_checks() {
 
   $query = db_select('ding_message_check', 'dmc');
+  // TODO: Why is the user not included here?
+  // Yhe leftover code seems to indicate that this has been the case at some
+  // point.
   // $query->join('users', 'u', 'u.uid = dms.uid');
 
   $query->addExpression("FROM_UNIXTIME(dmc.time, '%Y %m %d')", 'date');
@@ -102,6 +105,7 @@ function ding_message_update_form_submit($form, &$form_state) {
   $accounts[] = $form_state['values']['ding_message_update_uid'];
   $reset = $form_state['values']['reset_user'];
   ding_message_update_users($accounts, TRUE, $reset);
+  // TODO: Why set this message? The debug flag already spawns a lot of these.
   drupal_set_message(t('User updated'));
 }
 
@@ -119,6 +123,7 @@ function ding_message_purge_user_messages() {
  * Todo: function description here.
  */
 function ding_message_test() {
+  // TODO What is going on here? The naming and functionality here seems odd.
   ding_message_purge_messages();
   return "OK";
 }

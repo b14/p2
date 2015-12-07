@@ -1,5 +1,5 @@
 name = Ding interaction entity
-description = Enity type for ding interaction
+description = Entity type for ding interaction
 core = 7.x
 package = Features
 dependencies[] = eck

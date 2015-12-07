@@ -8,9 +8,11 @@
  * Implements hook_preprocess_page().
  */
 function ting_token_preprocess_page(&$variables) {
+  // TODO Is adding all these libraries to all pages really necessary?
   drupal_add_library('system', 'drupal.ajax');
   drupal_add_library('system', 'drupal.form');
   drupal_add_library('system', 'jquery.form');
+  // TODO Typo?
   drupal_add_library('system', 'druapl.progress');
   drupal_add_library('system', 'drupal.textarea');
   drupal_add_js(
@@ -89,6 +91,7 @@ function ting_token_get_insert_form($ajax, $ids = '') {
   if ($is_ajax) {
     $form = drupal_render($form);
     // Generate the settings:
+    // TODO Could this not be solved through drupal_get_js()?
     $settings = '';
     $javascript = drupal_add_js();
     if (isset($javascript['settings'], $javascript['settings']['data'])) {
@@ -96,6 +99,8 @@ function ting_token_get_insert_form($ajax, $ids = '') {
       $settings .= drupal_json_encode(call_user_func_array('array_merge_recursive', $javascript['settings']['data']));
       $settings .= ');</script>';
     }
+    // TODO Why is calling die here necessary? We have the ajax_deliver()
+    // callback set in hook_menu().
     die($form . $settings);
   }
   else {
@@ -131,6 +136,8 @@ function ting_token_insert_form($form, &$form_state) {
     $form['objects'][$i]['ting_object'] = array(
       '#type' => 'textfield',
       '#title' => t('Ting id'),
+      // TODO This seems odd. I could not find any declaration of col1 in the
+      // codebase?
       '#prefix' => '<div class="col1">',
       '#suffix' => '</div>',
       '#default_value' => isset($form_state['values'][$i]) ? $form_state['values'][$i]['ting_object'] : '',

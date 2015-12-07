@@ -10,6 +10,8 @@
 function ding_user_complete_admin_overview($form, &$form_state) {
   $status = ding_user_complete_hook();
 
+  // Instead of checking multiple strings how about just using a constant
+  // with a sufficiently unique value?
   if (isset($status['not_set']) && $status['not_set']['title'] == 'ding_user_complete_not_set') {
     drupal_set_message(t('No modules implement the user complete hook yet.'), 'warning');
     return;
@@ -37,11 +39,7 @@ function ding_user_complete_admin_overview($form, &$form_state) {
         'data' => array(
           '#type' => 'select',
           '#title' => '',
-          '#options' => drupal_map_assoc(
-            array(
-              1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-            )
-          ),
+          '#options' => range(1, 20),
           '#value' => (isset($weights[$key])) ? array($weights[$key]) : array($default),
           '#description' => t('Choose the amount of points this function gives when completed.'),
           '#name' => 'ding_user_complete_weights[' . $key . ']',

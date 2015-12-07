@@ -26,6 +26,8 @@ function ding_entity_rating_loan_history_ding_interaction_info() {
  * Implements hook_ding_interaction_view().
  */
 function ding_entity_rating_loan_history_ding_interaction_view($count = DING_ENTITY_RATING_LOAN_HISTORY_MAX_AMOUNT) {
+  // TODO: Should this be a check for the provider role instead?
+  // It does not make much sense for editorial users.
   if (user_is_logged_in()) {
     // Get entities to rated based on loan history.
     $objects = ding_entity_rating_loan_history_get_suggested_entities($count);
@@ -35,6 +37,8 @@ function ding_entity_rating_loan_history_ding_interaction_view($count = DING_ENT
         $view_objects[] = ding_entity_view($obj, 'compact');
       }
 
+      // TODO This creates a dependency on ting_carousel. This is not declared.
+      // It this intentional?
       $car = array('#theme' => 'ting_carousel', '#objects' => $view_objects);
       return render($car);
     }
@@ -63,6 +67,9 @@ function ding_entity_rating_loan_history_get_suggested_entities($count = DING_EN
     $list_elements = ding_list_load_elements($history_list);
 
     // Newest first.
+    // TODO: How do you know that this sorting ensures the newest is first?
+    // ding_list_load_elements() does not seem to do anything regarding
+    // ordering and it is not mentioned in the DocBlock either.
     krsort($list_elements);
 
     // Extract all ting object ids from the loan history.
@@ -79,6 +86,8 @@ function ding_entity_rating_loan_history_get_suggested_entities($count = DING_EN
     $object_ids = ding_entity_rating_loan_history_filter_by_rated($object_ids);
 
     // Collect entities for rating.
+    // TODO Please be more elaborate in the comment about what is going on here.
+    // I do not understand what the purpose of the second loop is.
     while (count($objects_to_load) < $count && !empty($object_ids)) {
       $rand_obj = array_rand($object_ids);
       $obj_id = $object_ids[$rand_obj];
@@ -117,7 +126,7 @@ function ding_entity_rating_loan_history_get_suggested_entities($count = DING_EN
 function ding_entity_rating_loan_history_filter_by_rated($ids) {
   $list = ding_list_get_list(DING_ENTITY_RATING_LIST);
   foreach ($ids as $key => $id) {
-    if ($element = ding_list_has_ding_list_element($list, 'ting_object', $id)) {
+    if (ding_list_has_ding_list_element($list, 'ting_object', $id)) {
       unset($ids[$key]);
     }
   }
@@ -135,6 +144,9 @@ function ding_entity_rating_loan_history_filter_by_rated($ids) {
  */
 function ding_entity_rating_loan_history_filter_by_interests($ting_object) {
   // Get the list on subjects which the user is not interested in.
+  // TODO There is a dependency to ding_interests here but it is not declared.
+  // Is this intentional?
+  // What is the 'no' type here?
   $interests = ding_interests_get_list_elements('no');
 
   // Load terms.
@@ -145,20 +157,23 @@ function ding_entity_rating_loan_history_filter_by_interests($ting_object) {
   }
 
   // Build list of ting objects subjects.
-  $historical_terms = array();
-  $subject = $ting_object->getSubjects();
+  $historical_terms = $ting_object->getSubjects();
+  $historical_terms[] = $ting_object->getType();
 
-  $historical_terms = array_merge($historical_terms, $subject);
-  $type = $ting_object->getType();
-
-  $historical_terms = array_merge($historical_terms, array($type));
   $record = $ting_object->getRecord();
-
   if (isset($record['dc:subject']['dkdcplus:genre'])) {
     $genre = $record['dc:subject']['dkdcplus:genre'];
     $historical_terms = array_merge($historical_terms, $genre);
   }
   // Check if any of the not interests subjects match the ting objects subjects.
+  // TODO There seems to be a problem regarding in_array here
+  // 1. historical_terms is an array of strings
+  // 2. term_names is an array of strings
+  // 3. in_array with an array of strings as needle will search for a
+  //   corresponding array entry in the haystack.
+  // Given that the haystack does no have any entries which are arrays I would
+  // think that in_array would always return false.
+  // Would something like array_intersect() be more appropriate?
   if (in_array($historical_terms, $term_names)) {
     return FALSE;
   }

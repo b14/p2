@@ -48,6 +48,7 @@ function ting_carousel_theme($existing, $type, $theme, $path) {
 function template_preprocess_ting_carousel(&$vars, $hook) {
   $depending_path = drupal_get_path('module', 'ting_search_carousel');
 
+  // TODO Please move these to #attached if possible.
   drupal_add_library('system', 'ui.widget');
   drupal_add_library('system', 'ui.draggable');
   drupal_add_js($depending_path . '/js/jquery.ui.touch-punch.min.js');
@@ -74,6 +75,7 @@ function ting_carousel_preprocess_ting_object(&$variables, $hook) {
     return;
   }
 
+  // TODO: Why is there a need to truncate here?
   $variables['content']['ting_title'][0]['#markup'] = truncate_utf8($variables['content']['ting_title'][0]['#markup'], 33, FALSE, TRUE);
 
   $entity_uri = entity_uri('ting_object', $variables['object']);
@@ -88,5 +90,6 @@ function ting_carousel_preprocess_ting_object(&$variables, $hook) {
     $variables['content']['ting_title'][0]['#markup'] = $object->serendipity_info;
   }
 
+  // TODO: Please move this to attached.
   drupal_add_css(drupal_get_path('module', 'ting_carousel') . '/css/ting-carousel-compact.css');
 }

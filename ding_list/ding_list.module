@@ -114,7 +114,6 @@ function ding_list__list_access_check($perms, $b_own = FALSE, $account = NULL) {
 
   if (!$list_access) {
     drupal_goto('user', array('query' => drupal_get_destination()));
-    return FALSE;
   }
 
   return eck__multiple_access_check($perms, $b_own);
@@ -243,6 +242,8 @@ function ding_list_user_has_list_edit_access($list_id) {
  *   The mapped array.
  */
 function ding_list_list_operations() {
+  // TODO: Please add a ding_list.api.inc file documenting the
+  // ding_list_operations hook. The expected return value seems quite complex.
   $modules = module_implements('ding_list_operations');
 
   $operations = array();
@@ -377,18 +378,14 @@ function ding_list_user_login(&$edit, $account) {
     ding_list_sync_openlist($account);
   }
 
-  if (ding_user_consent_has_consent('loan_history_store')) {
-    // Create any missing auto created lists.
-    ding_list_setup_autocreated($account);
+  // Create any missing auto created lists.
+  ding_list_setup_autocreated($account);
 
+  if (ding_user_consent_has_consent('loan_history_store')) {
     // Update the historical loans.
     ding_list_update_historical_loans($account);
   }
-  else {
-    // Create any missing autocreated lists.
-    ding_list_setup_autocreated($account);
-  }
-  
+
   ding_list_import_bookmarks($account);
 }
 
@@ -396,10 +393,19 @@ function ding_list_user_login(&$edit, $account) {
  * Import from bookmarks.
  */
 function ding_list_import_bookmarks($account) {
+  // TODO Why was this implemented using simplevar?
+  // - This module chooses to add a database field to the users table to
+  // add information. Why is this approach not sufficient here? Or why was
+  /// lazyvars not chosen for that information?
+  // - There is already a 3rd party module for managing lazy variables:
+  // https://www.drupal.org/project/lazy_vars. I agree that is is not very
+  // popular but neither is simple var.
   if (simplevar_get('ding_list_import_bookmarks', $account->uid, FALSE) === TRUE) {
     return;
   }
-  
+
+  // TODO This creates a undeclared dependency to ding_bookmark module.
+  // In general should this migration be moved to an install hook?
   $bookmarks = ding_bookmark_load_bookmarks($account);    
   if (empty($bookmarks)) {
     simplevar_set('ding_list_import_bookmarks', $account->uid, TRUE);
@@ -419,6 +425,8 @@ function ding_list_import_bookmarks($account) {
     }
   }
   catch (Exception $e) {
+    // TODO Can we do better here? More specific exception class, watchdog
+    // logging etc.
     // NOP
   }
 }
@@ -579,35 +587,38 @@ function ding_list_preprocess_entity(&$variables) {
   if ($variables['entity_type'] == 'ding_type') {
     switch ($variables['ding_type']->type) {
       case 'ding_list':
+        // TODO: Please use global $user as the start of the function
         if ($variables['ding_type']->uid != $GLOBALS['user']->uid) {
+          // TODO Why is this necessary? As far as I can tell we already
+          // have a separate title callback ding_list__list_title_callback.
           $username = ding_list_list_username($variables['ding_type']);
           if ($username) {
+            // TODO: If we stick to this approach then I would prefer the string
+            // t('@list_title, By @list_author') for better translatability
+            // and to avoid collision with other strings.
             $variables['title'] .= ', ' . t('By @author', array('@author' => $username));
           }
         }
         $objects = ding_base_get_items('ding_type', $variables['ding_type'], 'field_list_objects');
         $count = count($objects);
+        // TOD This could probably be put into the translation engine as well.
         $variables['title'] .= ' (' . $count . ')';
 
         switch ($variables['view_mode']) {
           case 'carousel':
-            $keys = array();
-            $i = 0;
-            foreach ($objects as $object) {
-              // Sets the max amount of items in the carousel to 10 elements.
-              if (++$i > 10) {
-                break;
-              }
-              $keys[] = $object['target_id'];
+            $ids = array();
+            // Sets the max amount of items in the carousel to 10 elements.
+            foreach (array_slice($objects, 0, 10) as $object) {
+              $ids[] = $object['target_id'];
             }
 
-            $objects = entity_load('ding_type', $keys);
+            $objects = entity_load('ding_type', $ids);
 
-            $keys = array();
+            $ting_ids = array();
             foreach ($objects as $object) {
-              $keys[] = ding_list_get_list_element_value($object);
+              $ting_ids[] = ding_list_get_list_element_value($object);
             }
-            $objects = ting_object_load_multiple($keys);
+            $objects = ding_entity_load_multiple($ting_ids, 'ting_object');
 
             if ($objects !== FALSE) {
               $items = array();
@@ -615,6 +626,7 @@ function ding_list_preprocess_entity(&$variables) {
                 $items[] = ting_object_view($object, 'compact');
               }
 
+              // TODO test?
               $variables['content']['test'] = array(
                 '#theme' => 'ting_carousel',
                 '#objects' => $items,
@@ -716,6 +728,7 @@ function ding_list_preprocess_entity(&$variables) {
             break;
 
           // Display a teaser of the
+          // TODO Comment missing a word or two?
           case 'taxonomy_term':
             $variables['page'] = TRUE;
             $tid = ding_list_get_list_element_value($element);
@@ -724,6 +737,7 @@ function ding_list_preprocess_entity(&$variables) {
               $term = taxonomy_term_load($tid);
             }
             else {
+              // TODO When would the tid not be a numeric value?
               $title = ding_base_get_value('ding_type', $element, 'field_search_title');
               $term = ding_list_get_taxonomy_term($title);
             }
@@ -796,6 +810,8 @@ function ding_list_ding_user_complete() {
   $set['ding_list_created_list'] = array(
     'title' => t('Create your own lists'),
     'points' => 1,
+    // TODO Why is this hardcoded to false? I would think we could check whether
+    // the user has created any lists.
     'completed' => FALSE,
     'markup' =>
     t("Did you know you can create your own lists and add objects to them?") . "<br/>" .
@@ -810,6 +826,7 @@ function ding_list_ding_user_complete() {
     $set['ding_list_following_author'] = array(
       'title' => t('Follow an author'),
       'points' => 1,
+      // TODO FALSE && boolean can never become anything other than FALSE.
       'completed' => FALSE && !empty($follow_author_elements),
       'markup' => t('Try following an author'),
     );
@@ -821,6 +838,7 @@ function ding_list_ding_user_complete() {
     $set['ding_list_following_search'] = array(
       'title' => t('Search subscriptions'),
       'points' => 1,
+      // TODO FALSE && boolean can never become anything other than FALSE.
       'completed' => FALSE && !empty($follow_search_elements),
       'markup' =>
       t('Subscribe for a search result and recieve notifications when new content arrives') .
@@ -844,6 +862,9 @@ function ding_list_preprocess_views_view_table(&$vars) {
   if ($view->name == 'ding_list_elements') {
     // Change titles of interrests pane.
     if ($view->current_display == 'panel_pane_2') {
+      // TODO Why is switching on these hardcoded titles necessary? If we can
+      // switch between yes and no we should be able to switch on 'Interests'
+      // and 'Topics I have no interrest in.' in the first place.
       switch ($vars['title']) {
         case 'yes':
           $vars['title'] = t('Interests');
@@ -876,12 +897,16 @@ function ding_list_preprocess_views_view_table(&$vars) {
       foreach ($vars['result'] as $item) {
         $vars['row_attributes'][]['data-item-id'] = $item->id;
       }
-      
+
+      // TODO Why do we add some CSS and JS here but also in
+      // ding_list_views_post_execute()?
       drupal_add_tabledrag($table_id, 'order', 'sibling', 'views-field-delta');
       drupal_add_js(drupal_get_path('module', 'ding_list') . '/js/ding_list_tabledrag.js');
       drupal_add_css(drupal_get_path('module', 'ding_list') . '/css/ding-list-tabledrag.css');
     }
     // Hide dragging fields if dragging is not enabled.
+    // TODO Why were these fields added in the first place if we at that point
+    // did not know if dragging was enabled?
     else {
       if (isset($vars['field_classes']['id'])) {
         foreach ($vars['field_classes']['id'] as &$classes) {
@@ -908,7 +933,7 @@ function ding_list_views_post_execute(&$view) {
 }
 
 /**
- * Change the html header for lists, to ensure og:url and og_description.
+ * Change the html header for lists, to ensure og:url and og:description.
  */
 function ding_list_html_head_alter(&$head_elements) {
   // If the current page is a list.
@@ -937,6 +962,9 @@ function ding_list_html_head_alter(&$head_elements) {
  * Implements hook_entity_load().
  *
  * When a list is loaded convert the cql of ting_objects to the new cql.
+ *
+ * TODO: This code runs every time an entity is loaded. That seems unnecessary.
+ * Could this be moved to an install hook instead?
  */
 function ding_list_entity_load($entities, $type) {
   $saved = &drupal_static(__FUNCTION__, array());
@@ -967,7 +995,11 @@ function ding_list_entity_load($entities, $type) {
  * Convert old cql.
  *
  * We need to convert old cql to new cql. Old cql will occur if ding_list has
- * been used on an evironment using the old cql before upgrading.
+ * been used on an environment using the old cql before upgrading.
+ *
+ * TODO It would be nice with an example of what a string might look like
+ * before and after conversion to understand what is going on.
+ * Regexs are not that readable.
  */
 function ding_list_convert_cql($string) {
   $pattern = '/(\s+?|^)(\(?dc|\(?phrase)\.(.+?)\s?="?(.+?)"?(\s+|$)(AND|OR|NOT|$)/';

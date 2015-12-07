@@ -3,6 +3,8 @@
  * @file
  * Serendipity entity ctools content_type
  */
+// TODO: Perhaps this belongs in the ding_serendipity module ifself?
+// Other similar panes are placed there as well - not in ding_serendipity_nodes.
 
 $plugin = array(
   'title' => t('Ding serendipity ting entity'),
@@ -89,6 +91,7 @@ function ding_serendipity_ting_entity_serendipity_entity_content_type_edit_form_
  */
 function ding_serendipity_ting_entity_type_render($subtype, $conf, $args, $context) {
   if ($conf['entity_type'] == 'node') {
+    // TODO: Why do we use an argument here instead of a context?
     $node = node_load($args[0]);
     $conf['bundle'] = $node->type;
   }

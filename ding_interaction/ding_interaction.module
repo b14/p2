@@ -73,12 +73,18 @@ function ding_interaction_permission() {
 
 /**
  * Ajax callback.
+ *
+ * TODO If this function does nothing except hide a pane could it then be
+ * handled clientside only? There does not seem to be a reason to involve the
+ * server.
  */
 function ding_interaction_hide($js = NULL) {
   if ($js) {
     ctools_include('ajax');
     $commands = array();
+    // TODO: $ouput is undefied. Is something missing?
     $commands[] = ajax_command_remove('.pane-interaction-pane', $output);
+    // TODO Please use ajax_deliver().
     print ajax_render($commands);
     exit;
   }
@@ -111,8 +117,12 @@ function ding_interaction_available_content($ignore_settings = FALSE) {
 
 /**
  * Get ding interaction content.
+ *
+ * TODO Please document the function parameters.
  */
 function ding_interaction_content($module_list = NULL, $count = DING_INTERACTION_DEFAULT_COUNT) {
+  // TODO: Please add some comments about what the purpose of this
+  // manipulation of user and edit is.
   global $user;
   $data = NULL;
   $edit = array();
@@ -142,7 +152,6 @@ function ding_interaction_content($module_list = NULL, $count = DING_INTERACTION
       }
 
       $output = array_merge($output, $module_list[$random]);
-      // $output['title'] = $module_list[$random]['title'];
       if (!is_array($data)) {
         $output['data'] = $data;
       }

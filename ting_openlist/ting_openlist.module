@@ -119,6 +119,8 @@ function ting_openlist_field_widget_form(&$form, &$form_state, $field, $instance
         $form['#ting_oppenlist_importer_widget'][] = $element['#field_name'];
       }
 
+      // TODO: This adds a dependency to ting_reference. This has not been
+      // declared.
       $instance['widget']['type'] = 'ting_reference_advanced';
       $element = ting_reference_field_widget_form($form, $form_state, $field, $instance, $langcode, $items, $delta, $element);
       break;
@@ -129,6 +131,8 @@ function ting_openlist_field_widget_form(&$form, &$form_state, $field, $instance
 
 /**
  * Add properties to openlist entities.
+ *
+ * TODO: If this is a implemenetation of a hook please state so.
  */
 function ting_openlist_entity_property_info_alter(&$info) {
   $properties = &$info['user']['properties'];
@@ -145,6 +149,9 @@ function ting_openlist_entity_property_info_alter(&$info) {
 
 /**
  * Implements hook_schema_alter().
+ *
+ * TODO Is the any reason why this is not plaed in the install file where it
+ * is called?
  */
 function ting_openlist_schema_alter(&$schema) {
   $schema['users']['fields']['openlist_uid'] = array(
@@ -152,12 +159,15 @@ function ting_openlist_schema_alter(&$schema) {
     'not null' => TRUE,
     'default' => 0,
     'length' => 255,
+    // TODO: This description does not make sense
     'description' => 'Last sync with openlist',
   );
 }
 
 /**
  * Alter importer widgets.
+ *
+ * TODO: If this is a implemenetation of a hook please state so.
  */
 function ting_openlist_form_alter(&$form, &$form_state, $form_id) {
   if (!empty($form['#ting_oppenlist_importer_widget'])) {
@@ -188,7 +198,7 @@ function ting_openlist_autocomplete_list($string) {
 }
 
 /**
- * Adds the list elements to th reference field.
+ * Adds the list elements to the reference field.
  *
  * Draw heavy inspiration from the field_add_more_submit in the field.form.inc
  * file, from the field module.
@@ -263,6 +273,7 @@ function ting_openlist_field_add_elements_js($form, &$form_state) {
  * Validate function for the ting_openlist_id textfield.
  */
 function ting_openlist_field_validate($element, &$form_state, $form) {
+  // TODO Please add a commet explaining what a valid openlist id is.
   if (!empty($element['#value']) && !preg_match('/^.+\s\[\d*\]$/', $element['#value'], $matches)) {
     form_error($element, t('Invalid openlist list'));
   }
@@ -290,6 +301,10 @@ function ting_openlist_get_soap($wsdl = NULL, $trace = FALSE) {
   if (!isset($clients[$wsdl])) {
     // Set our custom wsdl cache time to live. We save the previous ttl so
     // we can reset it after creating our SoapClient.
+    // TODO It would be preferable if we only set the cache ttl if one has been
+    // defined by the admin. It if is undefined we should use the system default.
+    // Setting the ttl for specific WSDLs is unusual unless it is a part
+    // of setting a "developer mode" for the integration.
     $previous_ttl = ini_get("soap.wsdl_cache_ttl");
     ini_set("soap.wsdl_cache_ttl", variable_get('ting_openlist_wsdl_cache_ttl', 0));
 
@@ -310,6 +325,8 @@ function ting_openlist_get_soap($wsdl = NULL, $trace = FALSE) {
 
       // Enable the developer cookie if specified.
       if (variable_get('ting_openlist_developer', FALSE)) {
+        // TODO: Checking the global state here is confusing. Can this be
+        // avoided?
         $clients[$wsdl]->__setCookie('developer', !isset($_POST['as_user']) ? 'on' : '');
       }
     }
@@ -507,9 +524,11 @@ function ting_openlist_user_identifier($account = NULL) {
  *   The identifier (sha512 hash).
  */
 function ting_openlist_create_identifier($name) {
+  // TODO: Why is there need for a prefix and appending the private key?
   $prefix = variable_get('ting_openlist_prefix', FALSE);
   if ($prefix === FALSE) {
     $prefix = uniqid();
+    // TODO This variable_get_does nothing. Is this intentional?
     variable_get('ting_openlist_prefix', $prefix);
   }
   return hash('sha512', $prefix . $name);

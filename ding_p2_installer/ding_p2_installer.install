@@ -34,6 +34,9 @@ function ding_p2_installer_update_7001() {
   
   // Load each field group for each display mode,
   // and insert rating and serendipity fields in the correct field groups.
+  // TODO Why are these added here and not in their specific modules e.g.
+  // ding serendipity and ding_entity_rating? It seems like the modules
+  // depend on their existence.
   
   // Default:
   $view_mode = 'default';

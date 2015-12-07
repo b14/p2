@@ -95,7 +95,7 @@ function ding_user_consent_token_quick_accept_submit($form, &$form_state) {
   $consent_id = (isset($form_state['consent_id'])) ? $form_state['consent_id'] : 'loan_history_store';
   $result = ding_provider_invoke('user_consent', 'add', $account, $consent_id, 1);
   if ($result) {
-    if (empty($account->data['consent']) || !isset($account->data['consent'])) {
+    if (empty($account->data['consent']))) {
       $auth_res['data']['consent'] = 1;
       user_save($account, $auth_res);
     }

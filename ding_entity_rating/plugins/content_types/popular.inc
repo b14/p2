@@ -17,12 +17,16 @@ $plugin = array(
  */
 function ding_entity_rating_popular_content_type_render($subtype, $conf, $panel_args, $context) {
   // Only show on front if activated.
+  // TODO: This should be a part of the pane configuration e.g. access rules -
+  // not the pane rendering.
   if(drupal_is_front_page() && !variable_get('ding_frontpage_serendipity') && variable_get('ding_frontpage_promoter') != 'serendipity') {
     return;
   }
   
   $block = new stdClass();
 
+  // TODO Few users have access to pane configuration. This means that most/all
+  // users will use the defaults. Is that intentional?
   $month = $conf['month'];
   if (empty($month)) {
     $month = date('Ym');
@@ -45,6 +49,9 @@ function ding_entity_rating_popular_content_type_render($subtype, $conf, $panel_
     ));
   }
   catch (Exception $e) {
+    // TODO Is there a more specific exception we could catch here? This is very
+    // board. Also I would expect that we at least logged exceptions using
+    // watchdog_exception().
     // NOP
   }
   
@@ -65,6 +72,8 @@ function ding_entity_rating_popular_content_type_render($subtype, $conf, $panel_
     $result[] = ting_object_view($obj, 'compact');
   }
 
+  // TODO: This adds a dependency to ting_carousel. It should be added to
+  // the info file.
   $block->content = theme('ting_carousel', array('objects' => $result));
   
   return $block;
@@ -83,6 +92,7 @@ function ding_entity_rating_popular_content_type_edit_form($form, &$form_state) 
   $form['month'] = array(
     '#type' => 'textfield',
     '#title' => t('Month'),
+    // TODO: If it is important then please add validation.
     '#description' => t('It is important to use YYYY-MM as format, like @example', array('@example' => date('Y-m'))),
     '#default_value' => $form_state['conf']['month'],
   );

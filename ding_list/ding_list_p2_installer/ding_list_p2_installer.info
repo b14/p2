@@ -1,10 +1,9 @@
 name = Ding List p2 Installer
 core = 7.x
-package = p2
+package = Ding!
 php = 5.2.4
 dependencies[] = ctools
 dependencies[] = ding_content
-dependencies[] = eck
 dependencies[] = eck
 dependencies[] = entityreference
 dependencies[] = entity

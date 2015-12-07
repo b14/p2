@@ -17,12 +17,17 @@ function ding_sharer_ctools_plugin_directory($owner, $plugin_type) {
  * Implements hook_html_head_alter().
  */
 function ding_sharer_html_head_alter(&$head_elements) {
+  // TODO: How about using menu_get_object() here?
   if (arg(0) === 'ting' && arg(1) === 'object' && arg(2)) {
     $local_id = explode(':', arg(2));
     $local_id = $local_id[1];
 
+    // TODO This creates a undeclared dependency to the ding_campaign module.
+    // This is rather odd. Could we create a preset of our own?
+    // TODO This creates a dependency to ting_covers.
     $image_url = image_style_url('ding_campaign_w_380', ting_covers_object_path($local_id));
     if (file_exists($image_url)) {
+      // TODO Why call file_get_contents here?
       file_get_contents($image_url);
 
       $head_elements['ogurl'] = array(

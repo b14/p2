@@ -17,6 +17,9 @@
  * - $field_classes: An array of classes to apply to each field, indexed by
  *   field id, then row number. This matches the index in $rows.
  * @ingroup views_templates
+ *
+ * TODO This template seems to be quite similar to the original template
+ * Please add a comment explaining why it is needed.
  */
 ?>
 <table <?php if ($classes): print 'class="' . $classes . '" '; endif; ?><?php print $attributes; ?>>

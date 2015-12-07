@@ -146,6 +146,7 @@ function ding_serendipity_ajax_callback() {
   $rendered_content = theme('ting_carousel', array('objects' => $tmp));
   $commands = array();
   $commands[] = ajax_command_html('.pane-serendipity-ting-object .pane-content', $rendered_content);
+  // TODO: Please use ajax_deliver.
   echo ajax_render($commands);
   exit;
 }
@@ -221,6 +222,7 @@ function ding_serendipity_fetch($context = NULL) {
 
   if (variable_get('ding_serendipity_enable_cache', FALSE)) {
     // Caching of serendipity.
+    // TODO Please prefix the cache name with the module name
     $cache_id = array();
     foreach ($context as $ct) {
       if (is_string($ct)) {
@@ -248,29 +250,22 @@ function ding_serendipity_fetch($context = NULL) {
   // Get the list of enabled callbacks.
   $enabled_callbacks = variable_get('ding_serendipity_callbacks', array());
 
-  // Get list of serendipity functions prioritised weights.
-  $weights = variable_get('ding_serendipity_weights', array());
-
   // Remove callbacks which have been disabled.
   if (!empty($enabled_callbacks)) {
-    foreach ($info as $name => $values) {
-      if (isset($enabled_callbacks[$name]) && !$enabled_callbacks[$name]) {
-        unset($info[$name]);
-      }
-    }
+    $info = array_intersect_key($info, array_filter($enabled_callbacks));
   }
   
   // If context:plugins is set, filter out all other serendipity functions,
   // as only the functions in the plugins array are of interest for this call.
   if (isset($context['plugins']) && is_array($context['plugins'])) {
-    foreach ($info as $name => $values) {
-      if (!in_array($name, $context['plugins'])) {
-        unset($info[$name]);
-      }
-    }
+    $info = array_intersect_key($info, array_flip($context['plugins']));
   }
-  
+
+  // Get list of serendipity functions prioritised weights.
+  $weights = variable_get('ding_serendipity_weights', array());
+
   // Sort the info functions by their weights.
+  // TODO What is going on with the '10' key? Is it just an arbitrary name?
   $ordered_info = array(10 => array());
   if (!empty($weights)) {
     foreach ($info as $name => $values) {
@@ -316,19 +311,23 @@ function ding_serendipity_fetch($context = NULL) {
 
       // Determine access to the current serendipity result.
       if (call_user_func($values['access callback'], $context, $values['keys'])) {
-        // If access is accepted then determine if #callback function exists.
+        // If access is accepted then determine if callback function exists.
         if (function_exists($values['callback'])) {
-          // If it is found get content from the #callback function.
+          // If it is found get content from the callback function.
           $content = call_user_func($values['callback'], $context);
         }
         else {
-          // If the #callback could not be found commit a watchdog warning.
+          // If the callback could not be found commit a watchdog warning.
           $path = drupal_get_path('module', $values['module']);
           watchdog('ding_serendipity', "Serendipity can't find function: @func", array('@func' => $values['callback']), WATCHDOG_WARNING, $path);
           drupal_set_message(t("Serendipity can't find function: @func", array('@func' => $values['callback'])), 'error');
         }
       }
       else {
+        // TODO Where does the status end up?
+        // - If it is checked at a later state programmatically then I would
+        // prefer a constant as a value
+        // - It does not seem to be a good idea to display it to the end user.
         $results['plugins'][$name]['status'] = "No access";
       }
 
@@ -483,6 +482,7 @@ function ding_serendipity_render($context = NULL) {
     if(is_array($id)) {
       $id = $id['object_id'];
     }
+    // TODO: Why do we need to decode the id here?
     $load_multiple[$item['type']][] = rawurldecode($id);
     $sources[$item['type'] . '_' . rawurldecode($id)] = $item['source'];
   }
@@ -501,7 +501,7 @@ function ding_serendipity_render($context = NULL) {
     
     $objects = entity_load($type, $ids, $conditions);
     foreach ($objects as $oid => $object) {
-      if (isset($object->published) && $object->published == FALSE) {
+      if (empty($object->published)) {
         continue;
       }
       
@@ -602,7 +602,7 @@ function ding_serendipity_append_fallback(&$list, $context) {
  *   This is the max amount of time you want to pass since your first call.
  *
  * @return bool
- *   Returns TRUE if your script is to slow, and FALSE if you're withing your
+ *   Returns TRUE if your script is to slow, and FALSE if you're within your
  *   boundaries.
  */
 function ding_serendipity_isslow($group = 'default', $time = 5) {
@@ -630,6 +630,8 @@ function ding_serendipity_isslow($group = 'default', $time = 5) {
         ));
     }
     watchdog(
+      // TODO: You would normally use the module name as the watchdog type
+      // Is it intentional that this is ot the case here?
       'Is slow',
       'isslow(@group) @func():@line',
       array(
@@ -668,6 +670,8 @@ function ding_serendipity_theme($existing, $type, $theme, $path) {
 
 /**
  * Implements hook_field_extra_fields().
+ * TODO Why has this been implemented using field_extra_fields()?
+ * We normally use virtualfield
  */
 function ding_serendipity_field_extra_fields() {
   $extra = array();
@@ -741,11 +745,14 @@ function ding_serendipity_do_search($query, $options = array()) {
       'sort' => '',
     ),
   );
+  // TOOD This adds an undeclared dependency to the ting module. Please add
+  // that.
   module_load_include('inc', 'ting', 'ting.client');
-  
+
 
   $search_result = ting_do_search($query, $options['page'], $options['count'], $options['options']);
   if (!isset($search_result->collections) || !is_array($search_result->collections)) {
+    // TODO: You would normally use the module name as the watchdog type.
     watchdog('ding_serendipity_do_search', 'BAD Search:@query', array('@query' => $query), WATCHDOG_WARNING);
   }
   else {  
@@ -755,18 +762,15 @@ function ding_serendipity_do_search($query, $options = array()) {
     }
         
     // Create result array
-    $cnt = 1;
     foreach ($search_result->collections as $id => $collection) {
       $results[] = array(
         'type' => 'ting_object',
         'id' => $collection->ding_entity_id
       );
-      
-      // Limit output
-      if ($cnt++ > $options['limit']) {
-        break;
-      }
     }
+
+    // Limit output
+    $results = array_slice($results, 0, $options['limit']);
   }
 
   return $results;

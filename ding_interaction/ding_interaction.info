@@ -3,6 +3,11 @@ description = Interaction delivery for users
 package = Ding!
 version = "7.x-1.x-dev"
 core = 7.x
+; TODO: files[] is unneeded here
 files[] = ding_interaction.module
+; TODO: Is this dependency needed?
+; I have looked through the code and I could
+; not spot anywhere in the ding_interaction module where the entity type or
+; fields defined in ding_interaction_feature are actually used. Should this
+; be moved to ding_interaction_manual?
 dependencies[] = ding_interaction_feature
-//configure = admin/config/ding/info_pane

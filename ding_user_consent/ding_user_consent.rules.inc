@@ -5,6 +5,9 @@
  * Ding user handling module.
  */
 
+// TODO Where is this Rules action used? I could not spot any references
+// in the codebase.
+
 /**
  * Implements hook_rules_action_info().
  */
@@ -30,7 +33,7 @@ function ding_user_consent_rules_action_info() {
  *   The newly created user to present the user consent information to.
  */
 function ding_user_consent_user_created_info($account) {
-  if(variable_get('user_consent_activate')) {
+  if (variable_get('user_consent_activate')) {
     $title = variable_get('loan_history_store_title_first_time', '');
     $description = variable_get('loan_history_store_description_first_time', '');
     drupal_set_message(check_plain($title));

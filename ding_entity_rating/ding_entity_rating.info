@@ -2,6 +2,7 @@ name = Ding entity rating
 description = Allow users to rate ting objects
 package = Ding!
 core = 7.x
+; TODO: The files[] declaration should not be necessary.
 files[] = ding_entity_rating.module
 
 dependencies[] = ding_list

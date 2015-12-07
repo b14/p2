@@ -1,7 +1,9 @@
+; TODO: I appreciate the effort here but I cannot see how this module provides
+; anything not also described in ding_interaction.api.inc.
+; There is not need to duplicate efforts so I suggest removing this module.
 name = Ding interaction example
 description = Interaction delivery example
 package = Ding!
 version = "7.x-1.x-dev"
 core = 7.x
 files[] = ding_interaction_example.module
-//configure = admin/config/ding/info_pane

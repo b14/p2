@@ -32,7 +32,7 @@ function ding_entity_rating_menu() {
     'title' => 'Ding entity rating add to list',
     'page callback' => 'ding_entity_rating_add_to_list_callback',
     'page arguments' => array(1, 2, 3, 4),
-    'access arguments' => array('access content'),
+    'access arguments' => array('rate ding content'),
   );
 
   return $items;
@@ -50,26 +50,20 @@ function ding_entity_rating_permission() {
 }
 
 /**
- * Define site permissions in code.
- *
- * Create a secure_permissions_data module directory and place this function
- * in secure_permissions_data.module.
- *
- * @param string $role
- *   The role for which the permissions are being requested.
- *
- * @return array
- *   An array defining all the permissions for the site.
+ * Implements hook_secure_permissions().
  */
 function ding_entity_rating_secure_permissions($role) {
   $permissions = array(
     'authenticated user' => array('rate ding entities'),
+    // TODO: If authenticated user has access then permissions for all other
+    // roles except anonymous user is unnecessary.
     'editor' => array('rate ding entities'),
     'local editor' => array('rate ding entities'),
     'guest blogger' => array('rate ding entities'),
     'provider' => array('rate ding entities'),
     'staff' => array('rate ding entities'),
     'local administrator' => array('rate ding entities'),
+    // TODO: There is no role in DDB CMS called developer
     'developer' => array('rate ding entities'),
   );
   if (isset($permissions[$role])) {
@@ -92,9 +86,15 @@ function ding_entity_rating_secure_permissions($role) {
 function ding_entity_rating_add_to_list_callback($ajax, $entity, $account, $rating) {
   if ($ajax) {
     // Add to interests list.
+    // TODO: There seems to be no access check for determining whether
+    // the current user is allowed to rate for the account.
+    // Currently any user seems to be able to add a rating for any other user
+    // through url manipulation.
     ding_entity_rating_add_to_list($entity, $account, $rating);
     
     // Build response.
+    // TODO How about adding a theme function for this?
+    // Nitpicking: Typo in reposonse
     $output = '<div class="ding-entity-rating-respons">' . t('Thank you for your input') . '</div>';
     
     // Return response.
@@ -102,6 +102,10 @@ function ding_entity_rating_add_to_list_callback($ajax, $entity, $account, $rati
     drupal_exit();
   }
   else {
+    // TODO: We do nothing if this is not AJAX. Is this intentional?
+    // I would think we could call ding_entity_rating_add_to_list() regardless
+    // and redirect to the refererer, the entity or something like that
+    // for non-AJAX requests.
     return '';
   }
 }
@@ -132,6 +136,8 @@ function ding_entity_rating_field_extra_fields() {
   $extra = array();
   
   // Add the rating form and options to ting objects display.
+  // TODO Why is this implemented using hook_field_extra_fields?
+  // We would normally use virtual field to achieve this.
   $extra['ting_object']['ting_object'] = array(
     'form' => array(
       'ding_entity_rating_result' => array(
@@ -212,6 +218,13 @@ function ding_entity_rating_user_has_rated($entity) {
   $element = ding_list_has_ding_list_element($list, 'ting_object', $entity->ding_entity_id);
 
   if ($element !== FALSE) {
+    // TODO The naming here is confusing? Why is field_weight related to
+    // whether the user has rated an entity?
+    // Also: As far as I can tell this allows the function to return non-boolean
+    // values. This goes against the DocBlock and the function name
+    // user_*has*_rated.
+    // I would prefer an integer return value and NULL if the user has not
+    // rated the entity.
     $result = ding_base_get_value('ding_type', $element, 'field_weight');
   }
   
@@ -239,8 +252,11 @@ function ding_entity_rating_theme($existing, $type, $theme, $path) {
  * Theme function for theme_ding_entity_rating_ding_user_complete_description.
  */
 function theme_ding_entity_rating_ding_user_complete_description($variables) {
+  //TODO It would add more flexibility to this theme function if the account
+  // was provided as an argument instead of using a global variable.
   global $user;
   $uid = $user->uid;
+  // TODO: How can $history_list be defined at this point?
   $history_button = isset($history_list) ? "<li>" . l(t("Rate previous loans"), "list/" . $history_list->id) . "</li>" : "";
   
   return "<div class='description'>" .
@@ -258,10 +274,13 @@ function template_preprocess_ding_entity_rating_display(&$variables) {
   $entity = $variables['entity'];
   
   // Add styling and javascript.
+  // TODO It would be preferable if these assets were added using
+  // #attached and the theme function returned a render array
+  // Example: http://www.vdmi.nl/blog/drupal-attached.
   $module_path = drupal_get_path('module', 'ding_entity_rating');
   drupal_add_css($module_path . '/css/ding_entity_rating.css');
   drupal_add_js($module_path . '/js/ding_entity_rating.js');
-  
+
   $variables['rating'] = ding_entity_rating_user_has_rated($entity);
   
   // If the user hasn't rated and this isn't the rating list itself, enable
@@ -274,12 +293,13 @@ function template_preprocess_ding_entity_rating_display(&$variables) {
   }
 
   if (user_access('rate ding entities')) {
-    $variables['classes_array'][] = ' rateable';
+    $variables['classes_array'][] = 'rateable';
   }
-  
+
   $variables['path'] = $entity->ding_entity_id . '/' . $user->uid;
-  
+
   $variables['avg'] = 0;
+  // If the user has not rated the entity then display an average.
   if ($variables['rating'] === FALSE) {
     $variables['avg'] = ding_entity_rating_get_average($entity);
     $variables['rating'] = ($variables['avg']) ? round($variables['avg']) : -1;
@@ -312,6 +332,7 @@ function theme_ding_entity_rating_display($variables) {
  * Preprocessor for ding_entity_rating_average
  */
 function template_preprocess_ding_entity_rating_average(&$variables) {
+  // TODO see comment regarding render arrays and #attached.
   drupal_add_css(drupal_get_path('module', 'ding_entity_rating') . '/css/ding_entity_rating.css');
 }
 
@@ -320,7 +341,9 @@ function template_preprocess_ding_entity_rating_average(&$variables) {
  */
 function theme_ding_entity_rating_average($variables) {
   $output = '<div class="ding-entity-rating-submitted">';
-  
+
+  // TODO This is duplicared from theme_ding_entity_rating_display.
+  // How about moving it to a shared function?
   $rating = round($variables['rating']);
   for ($i = 1; $i < 6; $i++) {
     $classes = array('fa', 'fa-star-o', 'star');
@@ -341,10 +364,8 @@ function theme_ding_entity_rating_average($variables) {
  */
 function ding_entity_rating_is_rating_list() {
   $list = ding_list_get_list(DING_ENTITY_RATING_LIST);
-  if (arg(0) == 'list' && arg(1) == $list->id) {
-    return TRUE;
-  }
-  return FALSE;
+  // TODO Could be refactored as so for simplicity.
+  return arg(0) == 'list' && arg(1) == $list->id;
 }
 
 /**
@@ -371,11 +392,13 @@ function ding_entity_rating_get_average($entity) {
  * Add entity from the rating list.
  *
  * @param object $entity
- *   The ting object entity to remove from the rating list.
+ *   The ting object entity to add to the rating list.
  * @param object $account
  *   The user account who's rating list to use.
  * @param int $rating
  *   The rating given to the ting object entity.
+ *
+ * TODO: There is no return value for this. What if it fails?
  */
 function ding_entity_rating_add_to_list($entity, $account, $rating) {
   // Get the rating list.
@@ -404,6 +427,8 @@ function ding_entity_rating_add_to_list($entity, $account, $rating) {
  *   The ting object entity to remove from the rating list.
  * @param object $account
  *   The user account who's rating list to use.
+ *
+ * TODO: There is no return value for this. What if it fails?
  */
 function ding_entity_rating_remove_from_list($entity, $account) {
   // Get the rating list.
@@ -417,6 +442,7 @@ function ding_entity_rating_remove_from_list($entity, $account) {
  * Implements hook_ding_user_complete().
  */
 function ding_entity_rating_ding_user_complete() {
+  // TODO: Two variables $list and $uid are not used here?
   $list = ding_list_get_list(DING_ENTITY_RATING_LIST);
   $complete = FALSE;
   
@@ -446,6 +472,8 @@ function ding_entity_rating_get_loans_not_rated() {
   global $user;
   $unrated = array();
   if (ding_user_is_provider_user($user)) {
+    // TODO: Why ding_provider_invoke_page? I would think ding_provider_invoke
+    // was sufficient.
     $loans = ding_provider_invoke_page('loan', 'list', $user);
     $list = ding_list_get_list(DING_ENTITY_RATING_LIST, $user);
     foreach ($loans as $loan) {

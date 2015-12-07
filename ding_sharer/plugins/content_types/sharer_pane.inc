@@ -35,9 +35,10 @@ function ding_sharer_content_type_render($subtype, $conf, $panel_args, $context)
   _menu_check_access($item, $item['map']);
   $access = $item['access'];  
   
-  if($access) {
+  if ($access) {
     foreach ($conf['communities'] as $community) {
       $title = ucfirst($community);
+      // TODO Why is the share link to the community not set here?
       $output->content .= '<a href="#" class="sharer-button sharer-' . $community . '">' . t('Share on @community', array('@community' => $title)) . '</a>';
     }
 

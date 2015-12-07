@@ -26,22 +26,22 @@ function ding_serendipity_ting_entity_serendipity_info() {
   $items = array(
     'ting_object_author' => array(
       'title' => 'Ting Objects related by same author',
-      'description' => 'Search Broenden for objects with same author',
+      'description' => 'Search for Ting objects with same author',
       'keys' => array('ting_object_id'),
     ),
     'ting_object_subject' => array(
       'title' => 'Ting Objects related by same subject',
-      'description' => 'Search Broenden for objects with same subject',
+      'description' => 'Search for Ting  objects with same subject',
       'keys' => array('ting_object_id'),
     ),
     'ting_object_type' => array(
       'title' => 'Ting Objects related by same type',
-      'description' => 'Search Broenden for objects with same type',
+      'description' => 'Search for Ting objects with same type',
       'keys' => array('ting_object_id'),
     ),
     'ting_object_publisher' => array(
       'title' => 'Ting Objects related by same publisher',
-      'description' => 'Search Broenden for objects with same publisher',
+      'description' => 'Search for Ting objects with same publisher',
       'keys' => array('ting_object_id'),
     ),
     'ting_object_adhl' => array(
@@ -89,7 +89,7 @@ function ding_serendipity_ting_entity_ting_object_author_serendipity_add($contex
 
   $obj = ding_entity_load($context['ting_object_id'], 'ting_object');
 
-  // Set the creator if such entry exists.
+  // Get the creator if such entry exists.
   $creators = $obj->getCreators();
   
   if (empty($creators)) {
@@ -101,7 +101,8 @@ function ding_serendipity_ting_entity_ting_object_author_serendipity_add($contex
   }
   
   $query = implode(' AND ', $creators);
-  
+
+  // TODO: This function is not defined?
   $results = ding_base_do_search($query, array());
   foreach($results as &$item) {
     $item['info'] = array(
@@ -159,8 +160,9 @@ function ding_serendipity_ting_entity_ting_object_type_serendipity_add($context)
 
   $obj = ding_entity_load($context['ting_object_id'], 'ting_object');
 
-  // Set the creator if such entry exists.
+  // Get the type if such entry exists.
   $type = $obj->getType();
+  // TODO Please add a comment why we bail if the type is bog.
   if (empty($type) || $type == 'bog') {
     return $results;
   }
@@ -191,7 +193,7 @@ function ding_serendipity_ting_entity_ting_object_publisher_serendipity_add($con
 
   $obj = ding_entity_load($context['ting_object_id'], 'ting_object');
 
-  // Set the creator if such entry exists.
+  // Get the publisher if such entry exists.
   $publisher = $obj->getPublisher();
   if (!$publisher) {
     return $results;
@@ -228,7 +230,9 @@ function ding_serendipity_ting_entity_ting_object_adhl_serendipity_add($context)
     $record = $obj->getRecord();
 
     // Lookup in ADHL service.
+    // TODO Use ting_get_object_recommendations() instead.
     $request = ting_get_request_factory()->getObjectRecommendationRequest();
+    // TODO We have a getIsbn function for retrieving this value.
     if (isset($record['dc:identifier']['dkdcplus:ISBN'])) {
       $request->setIsbn($record['dc:identifier']['dkdcplus:ISBN']);
       $request->setNumResults(10);
@@ -263,6 +267,8 @@ function ding_serendipity_ting_entity_ting_object_adhl_serendipity_add($context)
  * Implements hook_ding_serendipity_results_alter().
  */
 function ding_serendipity_ting_entity_ding_serendipity_results_alter(&$results) {
+  // TODO This seems crucial throughout the site. Is there any reason why this
+  // is not part of the ding_serendipity core module?
   $context = $results['context'];
   if (isset($context['ting_object_id'])) {
     $id = $context['ting_object_id'];

@@ -10,6 +10,10 @@
  * by the system that includes this file.
  */
 $plugin = array(
+  // TODO I do not understand how this plugin differs from
+  // "Ding serendipity content". The title/description refers to nodes but the
+  // contexts are largely the same. Only a ting_object is added.
+  // Could this be made clearer through title, description and code comments?
   'title' => t('Ding serendipity content with nodes'),
   'description' => t('Display serendipity content of nodes based on the current entity.'),
   'admin info' => 'ding_serendipity_serendipity_node_admin_info',
@@ -27,6 +31,8 @@ $plugin = array(
  * Return a summary for the administration information in panels.
  */
 function ding_serendipity_serendipity_node_admin_info($subtype, $conf, $context) {
+  // TODO: This seems very similar to ding_serendipity_admin_info().
+  // Could this be reused?
   $output = new stdClass();
   $output->title = t('Serendipity inspiration list');
   $output->content = t('Serendipity content. View mode: @view_mode', array('@view_mode' => $conf['view_mode'])) . '<br/>';
@@ -47,6 +53,8 @@ function ding_serendipity_serendipity_node_content_type_render($subtype, $conf, 
   // Build a context that can be rendered by the serendipity plugins 
 
   // Transfer selected keys from panel settings
+  // TODO This seems to be duplicated from
+  // ding_serendipity_serendipity_content_type_render().
   if (isset($conf['selected_keys'])) {
     foreach ($conf['selected_keys'] as $key => $value) {
       $context_data[$key] = TRUE;
@@ -106,6 +114,7 @@ function ding_serendipity_serendipity_node_content_type_render($subtype, $conf, 
   }
 
   $block = new stdClass();
+  // TODO: No need to handle override_title here.
   $block->title = ($conf['override_title']) ? $conf['override_title_text'] : t('Serendipity content');
   $block->content = $output;
   return $block;
@@ -127,6 +136,8 @@ function ding_serendipity_serendipity_node_content_type_edit_form($form, &$form_
   }
 
   // Setup a select field enabling the admin to customize the filter.
+  // TODO See comment in ding_serendipity_serendipity_content_type_edit_form
+  // regarding keys.
   $form['selected_keys'] = array(
     '#type' => 'select',
     '#title' => t('Selected'),
@@ -163,7 +174,10 @@ function ding_serendipity_serendipity_node_content_type_edit_form($form, &$form_
     '#default_value' => (isset($form_state['conf']['bundle'])) ? $form_state['conf']['bundle'] : '',
     '#description' => t('Select the bundle to list serendipity content for.'),
   );
-  
+
+  // TODO Could the base form be refactored so we could avoid declaring
+  // these fields again? The submit handler is already using
+  // ding_serendipity_form_base_submit().
   $form['max'] = array(
     '#type' => 'textfield',
     '#title' => t('Serendipity maximum'),
@@ -201,6 +215,7 @@ function ding_serendipity_serendipity_node_content_type_edit_form($form, &$form_
  * Implements hook_content_type_edit_form_validate().
  */
 function ding_serendipity_serendipity_node_content_type_edit_form_validate($form, &$form_state) {
+  // TODO Could this be handled using #required?
   if (!isset($form_state['values']['selected_keys']) || empty($form_state['values']['selected_keys'])) {
     form_error($form['selected_keys'], t('Please specify some keys for the serendipity filter.'));
   }

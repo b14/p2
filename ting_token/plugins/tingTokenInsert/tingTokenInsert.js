@@ -14,7 +14,6 @@ Drupal.wysiwyg.plugins['tingTokenInsert'] = {
    * 'wysiwyg_plugin_example-foo'.
    */
   isNode: function(node) {
-    res = $(node).is('.tingTokenInsert');
     return ($(node).is('.tingTokenInsert'));
   },
  
@@ -26,8 +25,8 @@ Drupal.wysiwyg.plugins['tingTokenInsert'] = {
     // to the plain-text version.
     if (data.format == 'html') {
       var content = this._getIds(data.content);
-      if(content !== '') {
-        settings.tingIds = content
+      if (content !== '') {
+        settings.tingIds = content;
       } else {
         settings.tingIds = '';
       }
@@ -104,6 +103,7 @@ Drupal.wysiwyg.plugins['tingTokenInsert'] = {
   detach: function(content, settings, instanceId) {
     var $content = $('<div>' + content + '</div>');
     $.each($('.mainTingInsert', $content), function (i, elem) {
+      // TODO Please remove outcommented code.
       //elem.parentNode.insertBefore(document.createComment('wysiwyg_example_plugin'), elem);
       elem.parentNode.removeChild(elem);
     });

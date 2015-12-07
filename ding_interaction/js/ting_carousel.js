@@ -1,3 +1,5 @@
+// TODO Why is file included here? I cannot find any references to it in the
+// module and it looks as if it belongs in the ting_carousel module.
 /**
  * @file
  * Handles the carousels loading of content and changes between tabs. There are

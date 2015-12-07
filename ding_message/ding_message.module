@@ -5,6 +5,7 @@
  * Messages and notifications for ding users
  */
 
+// TODO Please document what these constants actually mean.
 define('DING_MESSAGE_ACTIVE', 1);
 define('DING_MESSAGE_CLOSED', 2);
 define('DING_MESSAGE_IGNORE', 3);
@@ -27,6 +28,7 @@ function ding_message_menu() {
     'description' => 'Ding message administation options and configurations.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('ding_message_admin_form'),
+    // TODO Please add a dedicated permission for administering ding_message
     'access arguments' => array('administer message types'),
     'file' => 'ding_message.admin.inc',
   );
@@ -43,6 +45,16 @@ function ding_message_menu() {
     'file' => 'ding_message.admin.inc',
     'type' => MENU_LOCAL_TASK,
   );
+  // TODO If this is a report then consider moving it under the reporting
+  // admin section.
+  $items['admin/config/ding/ding_message/report-user-checks'] = array(
+    'title' => 'Report: User checks',
+    'description' => 'Report over users checked.',
+    'page callback' => 'ding_messages_admin_user_checks',
+    'access arguments' => array('administer message types'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'ding_message.admin.inc',
+  );
   $items['ding_message/status/change'] = array(
     'title' => 'Change message status',
     'page callback' => 'ding_message_change_status',
@@ -56,6 +68,8 @@ function ding_message_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'ding_message.admin.inc',
   );
+  // TODO Why are these menu item placed under /admin but not under
+  // /admin/config/ding/ding_message? I could not spot them being used anywhere.
   $items['admin/ding_message/test'] = array(
     'title' => 'Message test',
     'page callback' => 'ding_message_test',
@@ -65,17 +79,9 @@ function ding_message_menu() {
   );
   $items['admin/ding_message/test-check'] = array(
     'title' => 'Message check test',
-    'page callback' => 'ding_message_get_user_to_check',
+    'page callback' => 'ding_message_get_users_to_check',
     'access arguments' => array('administer message types'),
     'type' => MENU_CALLBACK,
-  );
-  $items['admin/config/ding/ding_message/report-user-checks'] = array(
-    'title' => 'Report: User checks',
-    'description' => 'Report over users checked.',
-    'page callback' => 'ding_messages_admin_user_checks',
-    'access arguments' => array('administer message types'),
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'ding_message.admin.inc',
   );
 
   return $items;
@@ -85,7 +91,9 @@ function ding_message_menu() {
  * Implements hook_cron().
  */
 function ding_message_cron() {
-  $accounts = ding_message_get_user_to_check();
+  // TODO Have you considering using the Queue API and then create a queue
+  // entry for updating the user when he logs in?
+  $accounts = ding_message_get_users_to_check();
   ding_message_update_users($accounts);
 
   // @todo: delete messages with orphan source relations
@@ -97,12 +105,13 @@ function ding_message_cron() {
  * @return array
  *   An array of accounts to check for updates.
  */
-function ding_message_get_user_to_check() {
+function ding_message_get_users_to_check() {
   // Only check users outside delay time interval
   // This means users recently logged in gets (re)checked first
   // But only rechecked after a certain delay.
   $time = time() - variable_get('ding_message_login_delay', 3600);
 
+  // TODO Please remove nonactive code from the codebase.
   // Select users ordered by when they where logged in
   // and when they where last checked.
   // Users who have recently been logged in
@@ -133,6 +142,8 @@ function ding_message_get_user_to_check() {
   $query->condition('u.status', 1)->distinct()
   // ->fields('dmc', array('time'))
   ->fields('u', array('uid'))
+  // TODO The relationship between the login condtion, the ordering and the
+  // range seems crucial here. Please add a comment explaining the logic.
   ->condition('u.login', $time, '<')->condition('edt.type', 'ding_list')->orderBy('u.login', 'DESC')->orderBy('dmc.time', 'ASC')->range(0, variable_get('ding_message_batch_size', 50));
 
   $accounts = array_values($query->execute()->fetchAllKeyed(0, 0));
@@ -142,6 +153,9 @@ function ding_message_get_user_to_check() {
   // }
 
   // Return accounts.
+  // TODO As I see it the function returns an array of uids not an array of
+  // accounts. Accounts could easily be mistaken for an array of user objects.
+  // The DocBlock should be updated to reflect this.
   return $accounts;
 }
 
@@ -149,9 +163,12 @@ function ding_message_get_user_to_check() {
  * Update a users messages.
  *
  * @param array $accounts
+ *   // TODO: This is a list of uids - not full account/user objectds.
  *   An array of users to check.
  *   This should be a limited list of users since,
  *   the message generation process could take some time.
+ *
+ * TODO Please document all parameters.
  */
 function ding_message_update_users($accounts, $debug = FALSE, $reset = FALSE) {
   // Get lists which can be followed.
@@ -176,6 +193,7 @@ function ding_message_update_users($accounts, $debug = FALSE, $reset = FALSE) {
       $list_ids = array_keys($lists);
       // Fetch messages generated by the user to check.
       // Skip full channels = DING_MESSAGE_IGNORE
+      // TODO Why are these skipped here?
       $mquery = new EntityFieldQuery();
       $mquery->entityCondition('entity_type', 'message', '=')->propertyCondition('type', 'new_content', '=')->propertyCondition('uid', $uid, '=')->fieldCondition('field_state', 'value', DING_MESSAGE_IGNORE, '!=');
       $result = $mquery->execute();
@@ -245,6 +263,8 @@ function ding_message_update_users($accounts, $debug = FALSE, $reset = FALSE) {
  *   A list of user lists to check for updates.
  * @param int $mid
  *   The entity id the message previously created if any.
+ *
+ * TODO: Please document all parameters
  */
 function ding_message_check_list_for_updates($uid, $element_id, $mid, $debug = FALSE) {
   // Load ding_type element.
@@ -317,10 +337,14 @@ function ding_message_check_list_for_updates($uid, $element_id, $mid, $debug = F
             // Get the amount of new elements since last check.
             $count = array_search($last_element_id, $collection_ids);
             // Add the count to the new elements count.
+            // TODO How do we know all the values of the new search are not
+            // already included in the existing count?
             $new_elements_count += $count;
             if ($status != DING_MESSAGE_ACTIVE) {
               // If the messages has been seen,
               // set the last and first element ids.
+              // TODO: This code seems to swap around first and last. Why is
+              // that?
               $last_element_id = $first_collection->ding_entity_id;
               $first_element_id = $result->collections[$collection_ids[$count - 1]]->ding_entity_id;
             }
@@ -331,6 +355,8 @@ function ding_message_check_list_for_updates($uid, $element_id, $mid, $debug = F
         else {
           if (count($result->collections)) {
             // Set all values for a new message to be created.
+            // TODO: This code seems to swap around first and last. Why is
+            // that?
             $last_element_id = $first_collection->ding_entity_id;
             $first_element = end($result->collections);
             $first_element_id = $first_element->ding_entity_id;
@@ -352,7 +378,7 @@ function ding_message_check_list_for_updates($uid, $element_id, $mid, $debug = F
         $query = ding_message_build_query($value);
         // Perform search.
         $result = ting_do_search($query, 1, 50);
-        if (is_object($result) || $result->numTotalCollections != 0) {
+        if (is_object($result) || $result->numTotalCollections > 0) {
           // Get the first element in the search result set.
           $first_collection = current($result->collections);
           if (!empty($message)) {
@@ -362,12 +388,17 @@ function ding_message_check_list_for_updates($uid, $element_id, $mid, $debug = F
               // Get the result set ids.
               $collection_ids = array_keys($result->collections);
               // Get the amount of new elements since last check.
+              // TODO How do we know all the values of the new search are not
+              // already included in the existing count?
               $count = array_search($last_element_id, $collection_ids);
               // Add the count to the new elements count.
               $new_elements_count += $count;
               if ($status != DING_MESSAGE_ACTIVE) {
                 // If the messages has been seen,
                 // set the last and first element ids.
+                // Set all values for a new message to be created.
+                // TODO: This code seems to swap around first and last. Why is
+                // that?
                 $last_element_id = $first_collection->ding_entity_id;
                 $first_element_id = $result->collections[$collection_ids[$count - 1]]->ding_entity_id;
               }
@@ -391,13 +422,15 @@ function ding_message_check_list_for_updates($uid, $element_id, $mid, $debug = F
 
     default:
       // Default is lists followed.
+      // TODO Do we have a constant for that type? If so I would prefer that do
+      // be explicitly checked.
       // Get the element value, to retrieve the followed list.
       $value = ding_list_get_list_element_value($element);
       if ($value) {
         // Load ding_type ding_list.
-        $list = entity_load('ding_type', array($value));
+        // TODO entity_load always returns an array.
+        $list = current(entity_load('ding_type', array($value)));
         if ($list) {
-          $list = current($list);
           // Get all elements in the list.
           $items = field_get_items('ding_type', $list, 'field_list_objects');
           // Get the element its.
@@ -405,16 +438,20 @@ function ding_message_check_list_for_updates($uid, $element_id, $mid, $debug = F
           if ($elements) {
             // Fetch the last element for comparison
             // with the current stored last element.
-            end($elements);
-            $current_last_element = current($elements);
+            $current_last_element = end($elements);
             if (!empty($message)) {
               // If the first search result element doesn't
               // match the stored last id, update the message.
+              // TODO: This seems odd. What if the last element id stored with
+              // the message has been removed from the list? Then we would
+              // treat it as an entirely new message?
               if (in_array($last_element_id, $elements)) {
                 if ($last_element_id <> $current_last_element) {
                   // Get the position of the last stored element.
                   $last_element_position = array_search($last_element_id, $elements);
                   // Get the amount of new elements since last check.
+                  // TODO How do we know that all subsequent elements are new?
+                  // What if the order of the list elements has been changed?
                   $new_elements = array_slice($elements, $last_element_position + 1);
                   // Add the count to the new elements count.
                   $new_elements_count += count($new_elements);
@@ -422,23 +459,19 @@ function ding_message_check_list_for_updates($uid, $element_id, $mid, $debug = F
                     // If the messages has been seen,
                     // set the last and first element ids.
                     $last_element_id = $current_last_element;
-                    reset($new_elements);
-                    $first_element_id = current($new_elements);
+                    $first_element_id = reset($new_elements);
                   }
                   // Tell the function that there are updates to save.
                   $has_updates = TRUE;
                 }
               }
             }
-            else {
-              if (count($elements)) {
-                // Set all values for a new message to be created.
-                $last_element_id = $current_last_element;
-                reset($elements);
-                $first_element_id = current($elements);
-                $new_elements_count += count($elements);
-                $has_updates = TRUE;
-              }
+            elseif (count($elements)) {
+              // Set all values for a new message to be created.
+              $last_element_id = $current_last_element;
+              $first_element_id = reset($elements);
+              $new_elements_count += count($elements);
+              $has_updates = TRUE;
             }
           }
         }
@@ -474,6 +507,9 @@ function ding_message_check_list_for_updates($uid, $element_id, $mid, $debug = F
     $wrapper->field_last_element->set($last_element_id);
     $wrapper->field_new_count->set($new_elements_count);
     if ($new_elements_count >= $channel_max) {
+      // TODO Why set the ignore flag of the message based on the number of
+      // new elements in the message? I would expect it to be the number of
+      // messages in the channel.
       $wrapper->field_state->set(DING_MESSAGE_IGNORE);
     }
     else {
@@ -494,6 +530,8 @@ function ding_message_check_list_for_updates($uid, $element_id, $mid, $debug = F
  */
 function ding_message_save_user_check($uid) {
   // Get previous record if any.
+  // TODO: It seems like this could be handled more elegantly using db_merge().
+  // https://api.drupal.org/api/drupal/includes!database!database.inc/function/db_merge/7
   $query = db_select('ding_message_check', 'c')->condition('c.uid', $uid)->fields('c', array('id'))->range(0, 1);
   $result = $query->execute();
   $id = $result->fetchField();
@@ -540,6 +578,7 @@ function ding_message_preprocess_entity(&$vars) {
         // Render message.
         $rendered_message = render($render);
         // Add message javascript and base styling.
+        // TODO: This could be #aatached to the render array.
         drupal_add_css(drupal_get_path('module', 'ding_message') . '/ding_message.css');
         drupal_add_js(drupal_get_path('module', 'ding_message') . '/ding_message.js');
         // Get current entity wrapper.
@@ -566,6 +605,7 @@ function ding_message_preprocess_entity(&$vars) {
         // Modify the url so new elements can be identified.
         $url = ding_message_modify_url($url, $last_element);
         // Wrap the message in a link to the targeted page.
+        // TODO Why not use a render array here?
         $output = '<a href="/' . $url . '" data-item-id="' . $values->mid . '">' . $rendered_message . '</a>';
         // Add message to content.
         $vars['content']['message'] = array('#markup' => '<div class="ding-message label">' . $output . '</div>');
@@ -576,6 +616,8 @@ function ding_message_preprocess_entity(&$vars) {
         $vars['content']['query']['#options']['attributes']['class'] = array('ding-message-link');
       }
       if (isset($_GET['message']) && $mid = $_GET['message']) {
+        // TODO If we have to rely on global state here then please document
+        // where this is coming from.
         drupal_add_js(drupal_get_path('module', 'ding_message') . '/ding_message.js');
         drupal_add_css(drupal_get_path('module', 'ding_message') . '/ding_message.css');
         $vars['attributes_array']['data-ting-object-id'] = $entity->id;
@@ -583,6 +625,8 @@ function ding_message_preprocess_entity(&$vars) {
       }
     }
     elseif ($bundle == 'ding_list') {
+      // TODO This looks a lot like the code from
+      // ding_message_get_ding_list_notification(). Can this be reused?
       // Get list elements.
       $items = field_get_items('ding_type', $entity, 'field_list_objects');
       if ($items) {
@@ -599,6 +643,7 @@ function ding_message_preprocess_entity(&$vars) {
         $result = $query->execute()->fetchField(1);
         // If a result was found, render a message with the total amount.
         if ($result) {
+          // TODO Please use #attached with the render array.
           drupal_add_css(drupal_get_path('module', 'ding_message') . '/ding_message.css');
           $output = l($result, 'list/' . $entity->id, array('html' => TRUE));
           $vars['content']['message'] = array('#markup' => '<div class="ding-message label">' . $output . '</div>');
@@ -714,6 +759,7 @@ function ding_message_build_query($query) {
  *
  * If the url is a search page add the size parameter 
  * so the search result contains 50 elements.
+ * TODO: Why?
  *
  * @param string $url
  *   The url to modify
@@ -724,6 +770,8 @@ function ding_message_build_query($query) {
  *   The modified url containing the first new item id.
  */
 function ding_message_modify_url($url, $eid) {
+  // TODO There is a lot of string manipulation going on here.
+  // Can this be simplified using drupal_parse_url() and url()?
   if (strpos($url, '?') !== FALSE) {
     $url .= '&';
     if (stripos($url, 'search/ting') !== FALSE) {
@@ -748,6 +796,7 @@ function ding_message_modify_url($url, $eid) {
  */
 function ding_message_change_status() {
   // Message id from post variables.
+  // TODO Why is this not an argument to the page callback function?
   $mid = $_POST['mid'];
   // Load message.
   $message = message_load($mid);
@@ -759,6 +808,12 @@ function ding_message_change_status() {
     // Save new state.
     $wrapper->save();
     // Clear cache (to update the header).
+    // TODO: This clears *all* caches. Is this intentional? I would think it
+    // only necessary for the current user/owner of the message?
+    // Also: This increases the coupling between this module and
+    // ding_notifications. Could we react to message state changes and clear
+    // caches accordingly in the ding_notifications module e.g. using
+    // hook_entity_update()?
     cache_clear_all('ding_notifications_content_type_render:', 'cache', TRUE);
   }
 }

@@ -38,6 +38,7 @@ function ding_interests_serendipity_info() {
  *   Array of results.
  */
 function ding_interests_materials_serendipity_add($context) {
+  // TODO $user is never used.
   global $user;
   // These are only shown on the front page if the user is logged in.
   if (!user_is_logged_in() || !$context['frontpage']) {
@@ -98,6 +99,7 @@ function ding_interests_nodes_by_bundle_serendipity_add($context) {
   // Fetch followed terms.
   $term = ding_interests_get_random_interest_term('interests');
   if (!empty($term)) {
+    // TOOD Could this be done using EntityFieldQuery?
     $select = db_select('taxonomy_index', 'ti');
     $select->addField('ti', 'nid');
     $select->condition('ti.tid', array($term->tid), 'IN');

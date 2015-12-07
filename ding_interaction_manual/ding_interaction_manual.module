@@ -42,6 +42,8 @@ function ding_interaction_manual_secure_permissions($role) {
  * Implements template_preprocess_entity().
  *
  * Removes the link from the ding_interaction entity.
+ * TODO: Describing what this does is nice but adding the reason
+ * is often more important.
  */
 function ding_interaction_manual_preprocess_entity(&$variables) {
   if ($variables['elements']['#entity_type'] === 'ding_type' && $variables['elements']['#entity']->type === 'ding_interaction') {
@@ -53,6 +55,8 @@ function ding_interaction_manual_preprocess_entity(&$variables) {
  * Implements hook_ding_interaction_view().
  */
 function ding_interaction_manual_ding_interaction_view() {
+  // TODO: Consider retrieving a single random entity in the query
+  // Example: http://eureka.ykyuen.info/2012/05/16/drupal-7-order-entityfieldquery-by-random-using-hook_query_tag_alter/.
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'ding_type')
     ->entityCondition('bundle', 'ding_interaction')
@@ -60,12 +64,13 @@ function ding_interaction_manual_ding_interaction_view() {
 
   $result = $query->execute();
   if (isset($result['ding_type'])) {
-    $key = array_keys($result['ding_type']);
-    $key = $key[array_rand($key)];
-    $entity = entity_load_single('ding_type', $key);
+    $ids = array_keys($result['ding_type']);
+    $id = $ids[array_rand($ids)];
+    $entity = entity_load_single('ding_type', $id);
 
     $render = current(current(entity_view('ding_type', array($entity), 'teaser')));
-    
+
+    // TODO: Use #attached since we already have a render array.
     drupal_add_css(drupal_get_path('module', 'ding_interaction_manual') . '/css/ding-interaction-manual.css');
     return array('data' => render($render));
   }
@@ -78,6 +83,9 @@ function ding_interaction_manual_ding_interaction_view() {
  */
 function ding_interaction_manual_ding_interaction_info() {
   return array(
+    // TODO This actually displays a single enabled randomly selected manually
+    // created message. Since title is what is being shown to the local
+    // administrator I think it would be nice if the title also reflected this.
     'title' => t('Ding interaction manual'),
     'css_class' => 'ding-interaction-manual complete-info',
     'active' => TRUE,

@@ -5,6 +5,12 @@
  * ding_interests.features.inc
  */
 
+// TODO: As far as I can tell this module does not define any features.
+// Why are these methods defined in a ding_entity_rating.features.inc file?
+// They also seem to refer to a range of apis which are not used by this module
+// e.g. field_groups, strongarm, views etc.
+// Can the entire file be deleted?
+
 /**
  * Implements hook_ctools_plugin_api().
  */
