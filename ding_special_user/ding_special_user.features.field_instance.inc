@@ -1,5 +1,4 @@
 <?php
-// TODO Exports should be in English
 /**
  * @file
  * ding_special_user.features.field_instance.inc
@@ -11,12 +10,12 @@
 function ding_special_user_field_default_field_instances() {
   $field_instances = array();
 
-  // Exported field_instance: 'profile2-special_user-field_kategori'
-  $field_instances['profile2-special_user-field_kategori'] = array(
+  // Exported field_instance: 'profile2-special_user-field_category'
+  $field_instances['profile2-special_user-field_category'] = array(
     'bundle' => 'special_user',
     'default_value' => NULL,
     'deleted' => 0,
-    'description' => 'Vælg brugerens kategiru',
+    'description' => 'Choose category of the user',
     'display' => array(
       'default' => array(
         'label' => 'above',
@@ -27,8 +26,8 @@ function ding_special_user_field_default_field_instances() {
       ),
     ),
     'entity_type' => 'profile2',
-    'field_name' => 'field_kategori',
-    'label' => 'Kategori',
+    'field_name' => 'field_category',
+    'label' => 'Category',
     'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
@@ -61,7 +60,7 @@ function ding_special_user_field_default_field_instances() {
     ),
     'entity_type' => 'profile2',
     'field_name' => 'field_list_image',
-    'label' => 'Liste billede',
+    'label' => 'List image',
     'required' => 0,
     'settings' => array(
       'alt_field' => 0,
@@ -106,9 +105,9 @@ function ding_special_user_field_default_field_instances() {
 
   // Translatables
   // Included for use with string extractors like potx.
-  t('Kategori');
-  t('Liste billede');
-  t('Vælg brugerens kategiru');
+  t('Category');
+  t('List image');
+  t('Choose category of the user');
 
   return $field_instances;
 }

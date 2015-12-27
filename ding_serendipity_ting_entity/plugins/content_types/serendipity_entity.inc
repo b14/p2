@@ -3,8 +3,6 @@
  * @file
  * Serendipity entity ctools content_type
  */
-// TODO: Perhaps this belongs in the ding_serendipity module ifself?
-// Other similar panes are placed there as well - not in ding_serendipity_nodes.
 
 $plugin = array(
   'title' => t('Ding serendipity ting entity'),
@@ -20,14 +18,7 @@ $plugin = array(
  * Returns a summary for the administration information in panels.
  */
 function ding_serendipity_ting_entity_admin_info($subtype, $conf, $context) {
-  $output = new stdClass();
-  $output->title = t('Serendipity');
-  $output->content = t('Serendipity content. View mode: @view_mode', array('@view_mode' => $conf['view_mode']));
-  $output->content .= t('Sort by weight: @sort_weight', array('@sort_weight' => $conf['sort_weight']));
-  $output->content .= t('Maximum items: @max', array('@max' => $conf['max']));
-  $output->content .= t('Minimum items: @min', array('@min' => $conf['min']));
-  $output->content .= t('Sort random: @random', array('@random' => $conf['random']));
-  return $output;
+  return ding_serendipity_get_default_admin_info($subtype, $conf, $context);
 }
 
 /**

@@ -8,6 +8,8 @@
  * Overview: /admin/structure/entity-type/ding_type/ding_interaction
  */
 
+include_once 'ding_interaction_manual.features.inc';
+
 /**
  * Implements hook_secure_permissions().
  *
@@ -17,7 +19,6 @@
  */
 function ding_interaction_manual_secure_permissions($role) {
   $permissions = array(
-    'authenticated user' => array(),
     'editor' => array(
       'eck add ding_type ding_interaction entities',
       'eck edit ding_type ding_interaction entities',
@@ -42,8 +43,7 @@ function ding_interaction_manual_secure_permissions($role) {
  * Implements template_preprocess_entity().
  *
  * Removes the link from the ding_interaction entity.
- * TODO: Describing what this does is nice but adding the reason
- * is often more important.
+ * To avoid having links to the entity when it's rendered.
  */
 function ding_interaction_manual_preprocess_entity(&$variables) {
   if ($variables['elements']['#entity_type'] === 'ding_type' && $variables['elements']['#entity']->type === 'ding_interaction') {
@@ -55,23 +55,20 @@ function ding_interaction_manual_preprocess_entity(&$variables) {
  * Implements hook_ding_interaction_view().
  */
 function ding_interaction_manual_ding_interaction_view() {
-  // TODO: Consider retrieving a single random entity in the query
-  // Example: http://eureka.ykyuen.info/2012/05/16/drupal-7-order-entityfieldquery-by-random-using-hook_query_tag_alter/.
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'ding_type')
     ->entityCondition('bundle', 'ding_interaction')
-    ->fieldCondition('field_ding_interaction_status', 'value', '1', '=');
+    ->fieldCondition('field_ding_interaction_status', 'value', '1', '=')
+    ->addTag('random')
+    ->range(0, 1);
+
 
   $result = $query->execute();
   if (isset($result['ding_type'])) {
-    $ids = array_keys($result['ding_type']);
-    $id = $ids[array_rand($ids)];
-    $entity = entity_load_single('ding_type', $id);
+    $id = array_keys($result['ding_type']);
+    $entity = entity_load_single('ding_type', $id[0]);
 
     $render = current(current(entity_view('ding_type', array($entity), 'teaser')));
-
-    // TODO: Use #attached since we already have a render array.
-    drupal_add_css(drupal_get_path('module', 'ding_interaction_manual') . '/css/ding-interaction-manual.css');
     return array('data' => render($render));
   }
 
@@ -79,15 +76,46 @@ function ding_interaction_manual_ding_interaction_view() {
 }
 
 /**
+ * Implementation of hook_query_TAG_alter
+ */
+function ding_interaction_manual_query_random_alter($query) {
+  $query->orderRandom();
+}
+
+/**
  * Implements hook_ding_interaction_info().
  */
 function ding_interaction_manual_ding_interaction_info() {
   return array(
-    // TODO This actually displays a single enabled randomly selected manually
-    // created message. Since title is what is being shown to the local
-    // administrator I think it would be nice if the title also reflected this.
-    'title' => t('Ding interaction manual'),
+    'title' => t('Ding interaction manual single random'),
     'css_class' => 'ding-interaction-manual complete-info',
     'active' => TRUE,
   );
+}
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Adds manual interaction help description to config page.
+ */
+function ding_interaction_manual_form_alter(&$form, &$form_state, $form_id) {
+  if($form_id == 'ding_interaction_admin_overview') {
+    $form['ding_interaction_help'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Ding interaction help'),
+      '#weight' => 6,
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+    );
+  
+    $form['ding_interaction_help']['markup'] = array(
+      '#type' => 'markup',
+      '#markup' => t('Ding Interactions are all sorts of information and interaction with the user which we want to present in rotation. In order not to overload the user with information, just one Ding Interaction is shown per page view. This way the user can casually be informed with deeper features of the website, occasionally be asked to interact (Like when asking the user to rate previous loans) and have an area which changes relevant content with no need for manual editing or administration.<br /><br />
+       Insert a "Ding interaction pane" on any page to display the Ding Interactions in rotation.') . '<br /><br />' .
+      l(t('> Overview of all manual Ding Interactions'), 'admin/structure/entity-type/ding_type/ding_interaction') .
+      '<br />' .
+      l(t('> Create new manual Ding Interaction'), 'admin/structure/entity-type/ding_type/ding_interaction/add') .
+      '<br /><br />' . 'Developers can use the API hooks to create new Ding Interactions.',
+    );
+  }
 }

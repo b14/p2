@@ -3,19 +3,14 @@
  * @file
  * Serendipity taxonomy term ctools content_type
  */
-// TODO: Perhaps this belongs in the ding_serendipity module ifself?
-// Other similar panes are placed there as well - not in ding_serendipity_nodes.
-
 
 $plugin = array(
   'title' => t('Ding serendipity taxonomy term'),
   'description' => t('Displays serendipity content based on a taxonomy term.'),
-  // TODO All these callbacks should be prefixed with the module name - not
-  // ding_stt_serendipity_term.
-  'admin info' => 'ding_stt_serendipity_term_admin_info',
+  'admin info' => 'ding_serendipity_term_admin_info',
   'single' => TRUE,
-  'edit form' => 'ding_stt_serendipity_term_content_type_edit_form',
-  'render callback' => 'ding_stt_serendipity_term_content_type_render',
+  'edit form' => 'ding_serendipity_term_content_type_edit_form',
+  'render callback' => 'ding_serendipity_term_content_type_render',
   'category' => t('Ding!'),
   'required context' => array(
     new ctools_context_optional(t('Term'), 'taxonomy_term'),
@@ -25,16 +20,8 @@ $plugin = array(
 /**
  * Implements hook_content_type_admin_info().
  */
-function ding_stt_serendipity_term_admin_info($subtype, $conf, $context) {
-  // TODO There should be some code which could be reused here as well.
-  $output = new stdClass();
-  $output->title = t('Serendipity taxonomy term');
-  $output->content = t('Serendipity content. View mode: @view_mode', array('@view_mode' => $conf['view_mode'])) . '<br/>';
-  $output->content .= t('Sort by weight: @sort_weight', array('@sort_weight' => $conf['sort_weight'])) . '<br/>';
-  $output->content .= t('Maximum items: @max', array('@max' => $conf['max'])) . '<br/>';
-  $output->content .= t('Minimum items: @min', array('@min' => $conf['min'])) . '<br/>';
-  $output->content .= t('Sort random: @random', array('@random' => $conf['random'])) . '<br/>';
-  return $output;
+function ding_serendipity_term_admin_info($subtype, $conf, $context) {
+  return ding_serendipity_get_default_admin_info($subtype, $conf, $context);
 }
 
 /**
@@ -63,7 +50,6 @@ function ding_stt_serendipity_term_content_type_edit_form($form, &$form_state) {
     '#type' => 'select',
     '#title' => t('Node type'),
     '#options' => $node_options,
-    // TODO: Why is ding_event chosen as default value?
     '#default_value' => (isset($form_state['conf']['bundle'])) ? $form_state['conf']['bundle'] : 'ding_event',
     '#description' => t('Select a node type if node is selected above.'),
   );

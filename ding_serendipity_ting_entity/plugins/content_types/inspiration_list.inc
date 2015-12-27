@@ -6,36 +6,25 @@
 
 $plugin = array(
   'title' => t('General purpose ding_object serendipity panel'),
-  'description' => t('Provide serendipity based a taxonomy term.'),
-  // TODO Please prefix callbacks with the module name.
-  'admin info' => 'ding_serendipity_entity_inspiration_list_admin_info',
+  'description' => t('Provide serendipity based on a current ding_object.'),
+  'admin info' => 'ding_serendipity_ting_entity_inspiration_list_admin_info',
   'single' => TRUE,
-  'edit form' => 'ding_serendipity_entity_inspiration_list_content_type_edit_form',
-  'render callback' => 'ding_serendipity_entity_inspiration_list_content_type_render',
+  // 'edit form' => 'ding_serendipity_ting__entity_inspiration_list_content_type_edit_form',
+  // 'render callback' => 'ding_serendipity_ting__entity_inspiration_list_content_type_render',
   'category' => t('Ding!'),
 );
-// TODO: Perhaps this belongs in the ding_serendipity module ifself?
-// Other similar panes are placed there as well - not in ding_serendipity_nodes.
 
 /**
  * Returns a summary for the administration information in panels.
  */
-function ding_serendipity_entity_inspiration_list_admin_info($subtype, $conf, $context) {
-  $output = new stdClass();
-  // TODO Consider code reuse here.
-  $output->title = t('Serendipity inspiration list');
-  $output->content = t('Serendipity content. View mode: @view_mode', array('@view_mode' => $conf['view_mode'])) . '<br/>';
-  $output->content .= t('Sort by weight: @sort_weight', array('@sort_weight' => $conf['sort_weight'])) . '<br/>';
-  $output->content .= t('Maximum items: @max', array('@max' => $conf['max'])) . '<br/>';
-  $output->content .= t('Minimum items: @min', array('@min' => $conf['min'])) . '<br/>';
-  $output->content .= t('Sort random: @random', array('@random' => $conf['random'])) . '<br/>';
-  return $output;
+function ding_serendipity_ting_entity_inspiration_list_admin_info($subtype, $conf, $context) {
+  return ding_serendipity_get_default_admin_info($subtype, $conf, $context);
 }
 
 /**
  * Implements hook_content_type_edit_form().
  */
-function ding_serendipity_entity_inspiration_list_content_type_edit_form($form, &$form_state) {
+function ding_serendipity_ting_entity_inspiration_list_content_type_edit_form($form, &$form_state) {
   module_load_include('inc', 'ding_serendipity', 'plugins/content_types/serendipity');
   $base = ding_serendipity_form_base($form_state);
   $form += $base;
@@ -55,7 +44,7 @@ function ding_serendipity_entity_inspiration_list_content_type_edit_form($form, 
 /**
  * Implements hook_content_type_edit_form_submit().
  */
-function ding_serendipity_entity_inspiration_list_content_type_edit_form_submit($form, &$form_state) {
+function ding_serendipity_ting_entity_inspiration_list_content_type_edit_form_submit($form, &$form_state) {
   ding_serendipity_form_base_submit($form_state);
   $form_state['conf']['limit'] = $form_state['values']['limit'];
 }
@@ -63,7 +52,7 @@ function ding_serendipity_entity_inspiration_list_content_type_edit_form_submit(
 /**
  * Implements hook_content_type_render().
  */
-function ding_serendipity_entity_inspiration_list_content_type_render($subtype, $conf, $args, $context) {
+function ding_serendipity_ting_entity_inspiration_list_content_type_render($subtype, $conf, $args, $context) {
   $context = array(
     'entity_type' => 'ding_object',
     'bundle' => 'ding_object',

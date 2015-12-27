@@ -35,7 +35,6 @@ function ding_serendipity_nodes_by_bundle_serendipity_add($context) {
   // Load node.
   $node = node_load($context['node_nid']);
   // Get the related content field.
-  // TODO Where is the this field declared? I could not spot it in the codebase.
   $content = field_get_items('node', $node, 'field_related_content');
   if (!empty($content)) {
     // Iterate through the items.
@@ -43,33 +42,25 @@ function ding_serendipity_nodes_by_bundle_serendipity_add($context) {
       // Add it to the results.
       $results[] = array(
         'type' => 'node',
-        'id' => $item['target_id'],
-        // TODO Why this weight?
-        'weight' => 50 + $key,
-        // TODO: No description here?
+        'id' => $item['target_id'],        
       );
     }
   }
 
   if (!empty($node->field_use_serendipity)) {
-    // TODO Where is the this field declared? I could not spot it in the codebase.
     $val = $node->field_use_serendipity[field_language('node', $node, 'field_use_serendipity')][0]['value'];
     if ($val) {
       return $results;
     }
   }
 
-  // TODO If the node does not have a serendipity field set we use an entirely
-  // different approach to generating suggestions? I would have expected that
-  // to be implemented in two different plugins.
   $similar_nodes = ding_similarterms_list('all', $node->nid);
   foreach ($similar_nodes as $snode) {
     $results[] = array(
       'type' => 'node',
       'id' => $snode->nid,
       'info' => array(
-        // TODO: Nodes is not a very enduser friendly term.
-        'description' => t('These nodes match the current node.'),
+        'description' => t('Related to this content.'),
       ),
     );
   }

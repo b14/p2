@@ -2,8 +2,7 @@
 
 /**
  * @file
- * Ding Serendipity CTools plugin file.
- * OBSOLOLETE?
+ * Ding user complete CTools plugin file.
  */
 
 /**

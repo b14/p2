@@ -3,15 +3,14 @@ description = Allows users to select subjects/genres/materialtypes which they li
 package = Ding!
 version = "7.x-1.x-dev"
 core = 7.x
-; TODO: Module file does not need to be delcared as a file.
-files[] = ding_interests.module
-files[] = views/ding_interests_handler_filter_interests.inc
-files[] = views/ding_interests_handler_relationships.inc
+
 dependencies[] = ding_content
 dependencies[] = ding_list
 dependencies[] = flag
 dependencies[] = conditional_flags
 dependencies[] = taxonomy
+dependencies[] = ding_serendipity
+dependencies[] = ting_carousel
 features[ctools][] = field_group:field_group:1
 features[ctools][] = views:views_default:3.0
 features[features_api][] = api:1

@@ -1,9 +1,9 @@
 ; $Id$
-name = Personalisering / P2
-description = Enable this module to install the entire p2 package
+name = Personalisation / P2
+description = Enable this module to install the entire personalisation package for the library.
 package = Ding!
 core = 7.x
-files[] = ding_p2_install.module
+
 dependencies[] = ding_entity_rating
 dependencies[] = ding_entity_rating_loan_history
 dependencies[] = ding_interaction

@@ -92,7 +92,7 @@ function ding_user_complete_process_options($element) {
     // the value of the tableselect element behaves as if it had been of type
     // checkboxes or radios.
     foreach ($element['#options'] as $key => $choice) {
-      // Do not overwrite manually created children.
+      // Do not override manually created children.
       if (!isset($element[$key])) {
         if ($element['#multiple']) {
           $title = '';

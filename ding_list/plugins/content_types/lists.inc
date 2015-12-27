@@ -29,10 +29,9 @@ function ding_list_lists_content_type_render($subtype, $conf, $panel_args, $cont
     'specials' => array(
       'title' => t('Library user status'),
       'lists' => array(
-        // TODO Why are these not constants?
-        'special_depts' => array(),
-        'special_reservations' => array(),
-        'special_loans' => array(),
+        DING_LIST_TYPE_SPECIAL_DEPTS => array(),
+        DING_LIST_TYPE_SPECIAL_RESERVATIONS => array(),
+        DING_LIST_TYPE_SPECIAL_LOANS => array(),
         DING_LIST_TYPE_LOAN_HISTORY => array(),
       ),
     ),
@@ -73,8 +72,6 @@ function ding_list_lists_content_type_render($subtype, $conf, $panel_args, $cont
               break;
 
             case 'hardcoded':
-              // TODO This now adds an undeclared dependency to ding_message
-              // Can this be avoided to create a simpler dependency graph?
               $notifications = ding_message_get_ding_list_notification($list);
               $notout = '';
               if (!empty($notifications)) {
@@ -115,8 +112,7 @@ function ding_list_lists_content_type_render($subtype, $conf, $panel_args, $cont
     $uri = entity_uri('user', $account);
 
     // Loans.
-    // TODO Why not ding_provider_invoke?
-    $count = count(ding_provider_invoke_page('debt', 'list', $account));
+    $count = count(ding_provider_invoke('debt', 'list', $account));
     $groups['specials']['lists']['special_depts'][] = array(
       'data' =>
       '<a href="/' . $uri['path'] . '/status/debts" class="signature-label"><span class="icon"></span>' . t('Fines') . '</a>' . '<span class="label">' . $count . '</span>',
@@ -124,7 +120,7 @@ function ding_list_lists_content_type_render($subtype, $conf, $panel_args, $cont
     );
 
     // Debts.
-    $count = count(ding_provider_invoke_page('loan', 'list', $account));
+    $count = count(ding_provider_invoke('loan', 'list', $account));
     $groups['specials']['lists']['special_loans'][] = array(
       'data' =>
       '<a href="/' . $uri['path'] . '/status" class="signature-label"><span class="icon"></span>' . t('Loans') . '</a>' . '<span class="label">' . $count . '</span>',
@@ -132,8 +128,8 @@ function ding_list_lists_content_type_render($subtype, $conf, $panel_args, $cont
     );
 
     // Reservations.
-    $count = count(ding_provider_invoke_page('reservation', 'list', $account, DING_RESERVATION_READY));
-    $count += count(ding_provider_invoke_page('reservation', 'list', $account, DING_RESERVATION_NOT_READY));
+    $count = count(ding_provider_invoke('reservation', 'list', $account, DING_RESERVATION_READY));
+    $count += count(ding_provider_invoke('reservation', 'list', $account, DING_RESERVATION_NOT_READY));
     $groups['specials']['lists']['special_reservations'][] = array(
       'data' =>
       '<a href="/' . $uri['path'] . '/status/reservations" class="signature-label"><span class="icon"></span>' . t('Reservations') . '</a>' . '<span class="label">' . $count . '</span>',
@@ -144,10 +140,14 @@ function ding_list_lists_content_type_render($subtype, $conf, $panel_args, $cont
     watchdog_exception('ding_list', $e);
   }
 
-  // Remove groups with no list.
+  // Remove groups with no list, and sort groups
   foreach ($groups as $group_key => $group) {
     if (count($group['lists']) == 0) {
       unset($groups[$group_key]);
+    }
+    
+    if (isset($group['sort']) && function_exists($group['sort'])) {
+      uasort($groups[$group_key]['lists'], $group['sort']);
     }
   }
 

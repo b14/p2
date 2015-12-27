@@ -1,8 +1,8 @@
 /**
  * @file
- * Rating jquery widget
+ * Ding serendipity 
  *
- * This widget allows users to rate library materials.
+ * Add serendipity GA tracking to links provided by serendipity module
  */
 
 (function ($) {
@@ -42,12 +42,10 @@
       }
       
       // Add analytics tracking
-      // TODO ting-object is not prefixed with a '.'. Is this intentional?
-      $('div[class*="pane-serendipity"] .ting-object, .ding-serendipity-analytics ting-object', context).each(function() {
+      $('div[class*="pane-serendipity"] .ting-object, .ding-serendipity-analytics .ting-object', context).each(function() {
         var _source = $('.ding-serendipity-source', this).text();
         $('a', this).click(function(evt) {
-          // TODO: The event category should be in english
-          _gaq.push(['_trackEvent', 'Serendipitet', 'click', _source]);
+          _gaq.push(['_trackEvent', 'Serendipy', 'click', _source]);
         });
       });
     }

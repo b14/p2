@@ -6,16 +6,12 @@
 (function ($) {
   "use strict";
 
-  // TODO Why do we hide these buttons on resize?
-  $(window).bind('resize', function (evt) {
-    $('.dlab-breakout-button:visible').css('display', 'none');
-  });
-  
   Drupal.behaviors.ding_list_add_button = {
     attach: function (context, settings) {
+      // Pull out the content of each ding-list-add-button, and place it in an
+      // element, that will be positioned absolute under the add-button when
+      // hovered.
       $('.ding-list-add-button', context).each(function (delta, dlab) {
-        // TODO I would appreciate a comment about what is going on here
-        // and why.
         var $buttons = $('.buttons', dlab)
           .css({
             position: 'absolute',
@@ -23,13 +19,14 @@
           })
           .addClass('dlab-breakout-button')
           .appendTo('body');
-        
+
+        // The .trigger is the "hit area" of the hover effect.
         $('.trigger', dlab).bind('mouseenter', function (evt) {
           $buttons.css($(this).offset())
             .css('display', 'block');
           $(dlab).addClass('showing');
         });
-          
+
         $buttons.bind('mouseleave', function (evt) {
           $buttons.css('display', 'none');
           $(dlab).removeClass('showing');

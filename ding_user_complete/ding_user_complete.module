@@ -26,48 +26,11 @@ function ding_user_complete_menu() {
     'description' => 'Get an overview of the activated elements implementing user completeness points',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('ding_user_complete_admin_overview'),
-    'access arguments' => array('administer ding user complete'),
+    'access arguments' => array('administer personalisation'),
     'file' => 'ding_user_complete.admin.inc',
   );
 
   return $items;
-}
-
-/**
- * Implements hook_permission().
- */
-function ding_user_complete_permission() {
-  return array(
-    'administer ding user complete' => array(
-      'title' => t('Administer ding user complete'),
-    ),
-  );
-}
-
-/**
- * Define site permissions in code.
- *
- * Create a secure_permissions_data module directory and place this function
- * in secure_permissions_data.module.
- *
- * @TODO: Please move all permission into ding_permission module.
- *
- *
- * @param string $role
- *   The role for which the permissions are being requested.
- *
- * @return array
- *   An array defining all the permissions for the site.
- */
-function ding_user_complete_secure_permissions($role) {
-  $permissions = array(
-    'local administrator' => array('administer ding user complete'),
-    // TODO DDB CMS has no developer role.
-    'developer' => array('administer ding user complete'),
-  );
-  if (isset($permissions[$role])) {
-    return $permissions[$role];
-  }
 }
 
 /**
@@ -99,8 +62,6 @@ function ding_user_complete_theme($existing, $type, $theme, $path) {
 /**
  * Defines a hook that allow other modules to create user completeness points.
  */
-// TODO This should be renamed from hook to info for consistency with other
-// functions.
 function ding_user_complete_hook() {
   // Get all point statuses provided by hook_user_complete_points()
   $modules = module_invoke_all('ding_user_complete');
@@ -163,7 +124,7 @@ function ding_user_complete_ding_interaction_view() {
     if (empty($data['markup'])) {
       return '';
     }
-    // TODO What is going on with the random here?
+    // Show random interaction:
     $markup = $data['markup'][array_rand($data['markup'], 1)];
     if (!$markup['markup']) {
       return '';

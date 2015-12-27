@@ -146,9 +146,11 @@ function ding_serendipity_ajax_callback() {
   $rendered_content = theme('ting_carousel', array('objects' => $tmp));
   $commands = array();
   $commands[] = ajax_command_html('.pane-serendipity-ting-object .pane-content', $rendered_content);
-  // TODO: Please use ajax_deliver.
-  echo ajax_render($commands);
-  exit;
+
+  ajax_deliver(array(
+    '#type' => 'ajax', 
+    '#commands' => $commands,
+  ));
 }
 
 /**
@@ -222,14 +224,13 @@ function ding_serendipity_fetch($context = NULL) {
 
   if (variable_get('ding_serendipity_enable_cache', FALSE)) {
     // Caching of serendipity.
-    // TODO Please prefix the cache name with the module name
     $cache_id = array();
     foreach ($context as $ct) {
       if (is_string($ct)) {
         $cache_id[] = $ct;
       }
     }
-    $cache_id = implode(':', $cache_id);
+    $cache_id = "ding_serendipity" . implode(':', $cache_id);
 
     $cache = cache_get($cache_id, 'cache_variable');
     if (!empty($cache) && REQUEST_TIME < $cache->expire) {
@@ -264,21 +265,17 @@ function ding_serendipity_fetch($context = NULL) {
   // Get list of serendipity functions prioritised weights.
   $weights = variable_get('ding_serendipity_weights', array());
 
-  // Sort the info functions by their weights.
-  // TODO What is going on with the '10' key? Is it just an arbitrary name?
+  // Group the plugins by weight
+  // All plugins in same weight are rendered to maintain a level of shuffled sources
   $ordered_info = array(10 => array());
-  if (!empty($weights)) {
-    foreach ($info as $name => $values) {
-      if (isset($weights[$name])) {
-        $ordered_info[$weights[$name]][$name] = $values;
-      }
-      else {
-        $ordered_info[10][$name] = $values;
-      }
+  foreach ($info as $name => $values) {
+    if (isset($weights[$name])) {
+      $ordered_info[$weights[$name]][$name] = $values;
     }
-  }
-  else {
-    $ordered_info[10][$name] = $values;
+    else {
+      // Default to weight 10
+      $ordered_info[10][$name] = $values;
+    }
   }
   ksort($ordered_info);
 
@@ -323,14 +320,7 @@ function ding_serendipity_fetch($context = NULL) {
           drupal_set_message(t("Serendipity can't find function: @func", array('@func' => $values['callback'])), 'error');
         }
       }
-      else {
-        // TODO Where does the status end up?
-        // - If it is checked at a later state programmatically then I would
-        // prefer a constant as a value
-        // - It does not seem to be a good idea to display it to the end user.
-        $results['plugins'][$name]['status'] = "No access";
-      }
-
+      
       // Append source information.
       // The 'info' array may contain extra details on the resulting object.
       // Info is kept seperated to preserve caching of objects.
@@ -347,7 +337,6 @@ function ding_serendipity_fetch($context = NULL) {
       shuffle($weight_results);
     }
     $results['items'] = array_merge($results['items'], $weight_results);
-
   }
 
   // Allow for alteration of the results.
@@ -482,9 +471,11 @@ function ding_serendipity_render($context = NULL) {
     if(is_array($id)) {
       $id = $id['object_id'];
     }
-    // TODO: Why do we need to decode the id here?
-    $load_multiple[$item['type']][] = rawurldecode($id);
-    $sources[$item['type'] . '_' . rawurldecode($id)] = $item['source'];
+
+    // Need to check id for sanitizing
+    $load_id = rawurldecode($id);
+    $load_multiple[$item['type']][] = $load_id;
+    $sources[$item['type'] . '_' . $load_id] = $item['source'];
   }
   
   $count = 0;
@@ -501,7 +492,9 @@ function ding_serendipity_render($context = NULL) {
     
     $objects = entity_load($type, $ids, $conditions);
     foreach ($objects as $oid => $object) {
-      if (empty($object->published)) {
+      // Only check if published is FALSE if it exists, this is not the same as
+      // using empty().
+      if (isset($object->published) && $object->published == FALSE) {
         continue;
       }
       
@@ -630,9 +623,7 @@ function ding_serendipity_isslow($group = 'default', $time = 5) {
         ));
     }
     watchdog(
-      // TODO: You would normally use the module name as the watchdog type
-      // Is it intentional that this is ot the case here?
-      'Is slow',
+      'ding_serendipity',
       'isslow(@group) @func():@line',
       array(
         '@func' => $backtrace[1]['function'],
@@ -670,8 +661,7 @@ function ding_serendipity_theme($existing, $type, $theme, $path) {
 
 /**
  * Implements hook_field_extra_fields().
- * TODO Why has this been implemented using field_extra_fields()?
- * We normally use virtualfield
+ * Later: change to virtualfield
  */
 function ding_serendipity_field_extra_fields() {
   $extra = array();
@@ -745,15 +735,13 @@ function ding_serendipity_do_search($query, $options = array()) {
       'sort' => '',
     ),
   );
-  // TOOD This adds an undeclared dependency to the ting module. Please add
-  // that.
+
   module_load_include('inc', 'ting', 'ting.client');
 
 
   $search_result = ting_do_search($query, $options['page'], $options['count'], $options['options']);
   if (!isset($search_result->collections) || !is_array($search_result->collections)) {
-    // TODO: You would normally use the module name as the watchdog type.
-    watchdog('ding_serendipity_do_search', 'BAD Search:@query', array('@query' => $query), WATCHDOG_WARNING);
+    watchdog('ding_serendipity', 'BAD Search:@query', array('@query' => $query), WATCHDOG_WARNING);
   }
   else {  
     // Randomize 
@@ -774,4 +762,129 @@ function ding_serendipity_do_search($query, $options = array()) {
   }
 
   return $results;
+}
+
+/**
+ * Implements hook_ding_serendipity_results_alter().
+ */
+function ding_serendipity_ding_serendipity_results_alter(&$results) {
+
+  // Remove current material if it is in the result list.
+  $context = $results['context'];
+  if (isset($context['node_nid'])) {
+    $id = $context['node_nid'];
+    foreach ($results['items'] as $key => $item) {
+      if ($item['id'] == $id) {
+        unset($results['items'][$key]);
+      }
+    }
+  }
+}
+
+function ding_serendipity_get_default_admin_info($subtype, $conf, $context) {
+  $output = new stdClass();
+  $output->title = t('Serendipity inspiration list');
+  $output->content = t('Serendipity content. View mode: @view_mode', array('@view_mode' => $conf['view_mode'])) . '<br/>';
+  $output->content .= t('Serendipity keys: @keys', array('@keys' => $conf['selected_keys'])) . '<br/>';
+  $output->content .= t('Sort by weight: @sort_weight', array('@sort_weight' => $conf['sort_weight'])) . '<br/>';
+  $output->content .= t('Maximum items: @max', array('@max' => $conf['max'])) . '<br/>';
+  $output->content .= t('Minimum items: @min', array('@min' => $conf['min'])) . '<br/>';
+  $output->content .= t('Sort random: @random', array('@random' => $conf['random'])) . '<br/>';
+  return $output;
+}
+
+/**
+ * Setup a base form for serendipity ctools content types.
+ */
+function ding_serendipity_form_base($form_state) {
+  
+  $entity_info = entity_get_info('node');
+  $view_modes = array_keys($entity_info['view modes']);
+  
+  $entity_info = entity_get_info('ting_object');
+  $view_modes = array_merge($view_modes, array_keys($entity_info['view modes']));
+  
+  $view_modes = array_combine($view_modes, $view_modes);
+
+  $form = array();
+  $form['view_mode'] = array(
+    '#type' => 'select',
+    '#title' => t('Selected'),
+    '#options' => $view_modes,
+    '#default_value' => (isset($form_state['conf']['view_mode'])) ? $form_state['conf']['view_mode'] : 'full',
+    '#description' => t('Select the view mode which the content will display with.'),
+  );
+  
+  $form['sort_weight'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Sort by by weight.'),
+    '#default_value' => (isset($form_state['conf']['random'])) ? $form_state['conf']['sort_weight'] : 0,
+  );
+  
+  $form['max'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Serendipity maximum'),
+    '#description' => t('The maximum number of items to display.'),
+    '#default_value' => (isset($form_state['conf']['max'])) ? $form_state['conf']['max'] : 2,
+    '#size' => 2,
+    '#maxlength' => 2,
+  );
+  
+  $form['min'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Serendipity minimum'),
+    '#description' => t('Select the minimum amount of items displayed.'),
+    '#default_value' => (isset($form_state['conf']['min'])) ? $form_state['conf']['min'] : 0,
+    '#size' => 3,
+    '#maxlength' => 3,
+  );
+  
+  $form['random'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Sort by random order.'),
+    '#default_value' => (isset($form_state['conf']['random'])) ? $form_state['conf']['random'] : 0,
+  );
+  
+  return $form;
+}
+
+/**
+ * Add plugin key selection to forms
+ */
+function ding_serendipity_form_base_keys($form_state) {  
+
+  $form = array();
+
+  // Let the user pick specific plugin keys for the serendipity panel
+  $info = ding_serendipity_get_info();
+  $options = array();
+  foreach ($info as $key => $value) {
+    foreach ($value['keys'] as $serendipity_key) {
+      if (!isset($options[$serendipity_key])) {
+        $options[$serendipity_key] = $serendipity_key;
+      }
+    }
+  }
+
+  $form['selected_keys'] = array(
+    '#type' => 'select',
+    '#title' => t('Selected'),
+    '#options' => array_unique($options),
+    '#multiple' => TRUE,
+    '#default_value' => $form_state['conf']['selected_keys'],
+    '#description' => t('Select any additional keys which apply to the serendipity display you wish to present.'),
+  );
+
+  return $form;
+}
+
+/**
+ * Setup a base form submit for serendipity ctools content types.
+ */
+function ding_serendipity_form_base_submit(&$form_state) {
+  $form_state['conf']['view_mode'] = !empty($form_state['values']['view_mode']) ? $form_state['values']['view_mode'] : 'big_teaser';
+  $form_state['conf']['sort_weight'] = !empty($form_state['values']['sort_weight']) ? $form_state['values']['sort_weight'] : FALSE;
+  $form_state['conf']['max'] = !empty($form_state['values']['max']) ? $form_state['values']['max'] : 0;
+  $form_state['conf']['min'] = !empty($form_state['values']['min']) ? $form_state['values']['min'] : 0;
+  $form_state['conf']['random'] = !empty($form_state['values']['random']) ? $form_state['values']['random'] : FALSE;
 }

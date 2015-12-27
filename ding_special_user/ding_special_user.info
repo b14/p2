@@ -13,9 +13,8 @@ dependencies[] = options
 dependencies[] = profile2
 dependencies[] = taxonomy
 features[features_api][] = api:1
-; TODO There seems to be a spelling error here.
-features[field_base][] = field_kategori
-features[field_instance][] = profile2-special_user-field_kategori
+features[field_base][] = field_category
+features[field_instance][] = profile2-special_user-field_category
 features[field_instance][] = profile2-special_user-field_list_image
 features[profile2_type][] = special_user
 features[taxonomy][] = special_user_category

@@ -6,4 +6,5 @@ files[] = ding_serendipity_lists.module
 dependencies[] = ding_base
 dependencies[] = ding_list
 dependencies[] = ding_loan
+dependencies[] = ding_provider
 dependencies[] = ding_serendipity

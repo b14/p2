@@ -54,22 +54,25 @@ function ding_list_remove_element_form_submit($form, &$form_state) {
 /**
  * Add an element to a list.
  *
- * TODO Please document function parameters here. Parameters seem very generic.
- * I would have expected the function to take at least a list and/or an element
- * as parameters.
- * The $extra_data parameter is never used?
+ * @param string $type
+ *   The type of element to add.
+ * @param string $value
+ *   The value of the element, typically an identifier.
+ * @param string $title
+ *   If there's more than 1 list, use this as the title for the submit button,
+ *   when there's only a single list use that list add text as submit text.
+ * @param string $search_title
+ *   This is passed on to the submit, and added into the search_title.
  */
-function ding_list_add_element_form($form, &$form_state, $type, $value, $title = 'Dinglist', $extra_data = '') {
+function ding_list_add_element_form($form, &$form_state, $type, $value, $title = 'Dinglist', $search_title = '') {
   if (is_array($type)) {
     $type = key($type);
   }
 
-  // Allow for translatable list titles.
-  // TODO: This is not good for extracting translatable strings. The callee
-  // should wrap the string in t().
-  $submit_title = t($title);
   $options = ding_list_get_add_to_list_data($type, $value);
   if (count($options) > 1) {
+    $submit_title = $title;
+    
     $form['list'] = array(
       '#type' => 'select',
       '#options' => array(),
@@ -92,11 +95,7 @@ function ding_list_add_element_form($form, &$form_state, $type, $value, $title =
       '#value' => $list['list_id'],
     );
 
-    // Allow for translatable list titles.
-    // TODO As above regarding translateability. It also increases coupling
-    // to the caller as that function now must be aware of this substitution
-    // when setting the value.s
-    $submit_title = t($title, array('@list' => $list['title']));
+    $submit_title = $list['title'];
   }
 
   $form['submit'] = array(
@@ -108,16 +107,13 @@ function ding_list_add_element_form($form, &$form_state, $type, $value, $title =
     ),
   );
 
-  // TODO Could we just use the default submit handler name here?
-  $form['#submit'] = array('ding_list_add_element_submit');
-
   return $form;
 }
 
 /**
  * Submit handler for the ding_list_add_element form.
  */
-function ding_list_add_element_submit($form, &$form_state) {
+function ding_list_add_element_form_submit($form, &$form_state) {
   // Get the arguments given the ding_list_add_element form ($type and $value).
   $type = $form_state['build_info']['args'][0];
   if (is_array($type)) {
@@ -152,7 +148,6 @@ function ding_list_add_element_submit($form, &$form_state) {
     }
 
     if ($element !== FALSE) {
-      // TODO: Should the response be set as message if we are not using AJAX?
       $form_state['storage']['response_html'] = t('Added to !name', array('!name' => l($list->title, 'list/' . $list->id)));
     }
     else {
@@ -190,100 +185,84 @@ function ding_list_add_element_form_callback($form, &$form_state) {
  *   This is the existing ding_list object.
  */
 function ding_list_create_list_form($form, &$form_state, $existing = FALSE) {
+  if ($existing !== FALSE) {
+    $form_state['existing'] = $existing->id;
 
-  // @todo: Respect the consent.
-  $consent = TRUE || ding_user_consent_has_consent('loan_history_store');
+    if (isset($form_state['storage']['confirm'])) {
+      $form['#submit'] = array('ding_list_create_list_form_submit_delete');
 
-  if ($consent) {
-    if ($existing !== FALSE) {
-      $form_state['existing'] = $existing->id;
-
-      if (isset($form_state['storage']['confirm'])) {
-        $form['#submit'] = array('ding_list_create_list_form_submit_delete');
-
-        $tmp = confirm_form(
-          $form,
-          // TODO Plese use a valid question. Even though it may not be used
-          // there is no need to risk our debugging information in front of the
-          // user at some point.
-          'the question is not used?',
-          current_path(),
-          t('Do you really want to delete !list?', array('!list' => $existing->title))
-        );
-
-        return $tmp;
-      }
-
-      $note = field_get_items('ding_type', $existing, 'field_notes');
-      if ($note !== FALSE) {
-        $note = $note[0]['value'];
-      }
-    }
-    else {
-      $form_state['existing'] = FALSE;
-    }
-
-    $form['title'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Title'),
-      '#required' => TRUE,
-      '#default_value' => isset($existing->title) ? filter_xss($existing->title) : '',
-    );
-
-    $form['notes'] = array(
-      '#type' => 'textarea',
-      '#title' => t('Note'),
-      '#default_value' => isset($note) ? filter_xss($note) : '',
-    );
-
-    if ($existing) {
-      // TODO is there no need for an access check here?
-      $form['actions']['edit_list'] = array(
-        '#type' => 'submit',
-        '#value' => t('Edit list'),
+      $tmp = confirm_form(
+        $form,
+        t('Do you really want to delete !list?', array('!list' => $existing->title)),
+        current_path(),
+        t('Do you really want to delete !list?', array('!list' => $existing->title))
       );
 
-      if (ding_list_allowed($existing, DING_LIST_OPERATION_DELETE)) {
-        $form['actions']['delete_list'] = array(
-          '#type' => 'submit',
-          '#value' => t('Delete list'),
-          '#submit' => array('ding_list_create_list_form_submit_delete'),
-        );
-      }
-    }
-    else {
-      $form['actions']['add_list'] = array(
-        '#type' => 'submit',
-        '#value' => t('Add new list'),
-      );
+      return $tmp;
     }
 
-    $form['actions']['cancel'] = array(
+    $note = field_get_items('ding_type', $existing, 'field_notes');
+    if ($note !== FALSE) {
+      $note = $note[0]['value'];
+    }
+  }
+  else {
+    $form_state['existing'] = FALSE;
+  }
+
+  $form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Title'),
+    '#required' => TRUE,
+    '#default_value' => isset($existing->title) ? filter_xss($existing->title) : '',
+  );
+
+  $form['notes'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Note'),
+    '#default_value' => isset($note) ? filter_xss($note) : '',
+  );
+
+  if ($existing) {
+    // The user can is always allowed to edit existing lists.
+    $form['actions']['edit_list'] = array(
       '#type' => 'submit',
-      '#value' => t('Cancel'),
-      '#submit' => array('ding_list_create_list_form_submit_cancel'),
-      '#limit_validation_errors' => array(),
+      '#value' => t('Edit list'),
     );
 
-    // TODO Please add a comment explainin what is going on here and why.
-    if (isset($_GET['at'])) {
-      $form['auto_add_type'] = array(
-        '#type' => 'hidden',
-        '#value' => $_GET['at'],
-      );
-
-      $form['auto_add_value'] = array(
-        '#type' => 'hidden',
-        '#value' => $_GET['av'],
+    if (ding_list_allowed($existing, DING_LIST_OPERATION_DELETE)) {
+      $form['actions']['delete_list'] = array(
+        '#type' => 'submit',
+        '#value' => t('Delete list'),
+        '#submit' => array('ding_list_create_list_form_submit_delete'),
       );
     }
   }
   else {
-    $description = variable_get('loan_history_store_description_first_time', '');
-    $form['message'] = array(
-      '#type' => 'item',
-      '#title' => variable_get('loan_history_store_title_first_time', ''),
-      '#markup' => $description['value'],
+    $form['actions']['add_list'] = array(
+      '#type' => 'submit',
+      '#value' => t('Add new list'),
+    );
+  }
+
+  $form['actions']['cancel'] = array(
+    '#type' => 'submit',
+    '#value' => t('Cancel'),
+    '#submit' => array('ding_list_create_list_form_submit_cancel'),
+    '#limit_validation_errors' => array(),
+  );
+
+  // If auto add is set, add the hidden fields that will enable autoadding
+  // an element to the list after creation.
+  if (isset($_GET['at'])) {
+    $form['auto_add_type'] = array(
+      '#type' => 'hidden',
+      '#value' => $_GET['at'],
+    );
+
+    $form['auto_add_value'] = array(
+      '#type' => 'hidden',
+      '#value' => $_GET['av'],
     );
   }
 
@@ -384,6 +363,8 @@ function ding_list_create_list_form_submit($form, &$form_state) {
 
 /**
  * A list permissions handler form.
+ *
+ * This is a pure ajax interface form.
  */
 function ding_list_list_permissions_form($form, $form_state, $list = FALSE) {
   // Get the status options from the field_ding_list_status allowed values.
@@ -518,8 +499,6 @@ function ding_list_list_permissions_form($form, $form_state, $list = FALSE) {
       );
     }
   }
-
-  // TODO: Are there no non-AJAX submit handlers?
 
   return $form;
 }

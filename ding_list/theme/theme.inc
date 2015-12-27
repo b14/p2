@@ -5,17 +5,6 @@
  */
 
 /**
- * Add an entity to the list.
- * TODO What is this function doing here? It does not seem theme related
- * and I cannot find anywhere it is being called.
- */
-function ding_list_add_to_list($lid, $content) {
-  // @todo validate input
-  $list = entity_load('ding_type', array($lid));
-  entity_save('ding_type', $list);
-}
-
-/**
  * Ding list message theme.
  */
 function theme_ding_list_message($variables) {
@@ -33,11 +22,6 @@ function theme_ding_list_permission_description($variables) {
  * Default preprocess.
  */
 function template_preprocess_ding_list_list(&$variables) {
-  if ($variables['toggler'] === TRUE) {
-    // TODO If this is really unused then please uncomment.
-    // $variables['toggler'] = array('#theme' => 'ding_list_mode_toggler');
-  }
-
   if ($variables['sortable'] !== FALSE) {
     $variables['classes_array'][] = 'sort-enabled';
   }
@@ -47,16 +31,17 @@ function template_preprocess_ding_list_list(&$variables) {
  * Add button.
  */
 function template_preprocess_ding_list_add_button(&$variables) {
-  // TODO: Could this be added to #attached in a render array?
-  drupal_add_library('system', 'drupal.ajax');
-  drupal_add_js(drupal_get_path('module', 'ding_list') . '/js/ding-list-add-button.js');
-  drupal_add_css(drupal_get_path('module', 'ding_list') . '/css/ding-list-add-button.css');
-
+  $path = drupal_get_path('module', 'ding_list');
   $variables['buttons'] = array(
     '#theme' => 'links',
     '#links' => array(),
     '#attributes' => array(
       'class' => array('buttons'),
+    ),
+    '#attached' => array(
+      'library' => array(array('system', 'drupal.ajax')),
+      'css' => array($path . '/css/ding-list-add-button.css'),
+      'js' => array($path . '/js/ding-list-add-button.js'),
     ),
   );
 
@@ -139,26 +124,24 @@ function template_preprocess_ding_list_followers(&$variables) {
 function theme_ding_list_followers($variables) {
   $out = format_plural($variables['count'], '1 user following this list', '@count users following this list');
   
+  return $out;
+}
+
+/**
+ * Ding list info theme
+ */
+function theme_ding_list_info($variables) {
+  $out = '';
+  
   if ($variables['note'] !== FALSE) {
     $out .= '<div class="ding-list-note">' . $variables['note'] . '</div>';
   }
 
-  // TODO Outputting the elements seem odd compared when the function is
-  // dealing with followers.
   if ($variables['no_objects']) {
     $out .= '<div class="ding-list-no-elements">' . t('No elements in this list.') . '</div>';
   }
   
   return $out;
-}
-
-
-/**
- * Ding list lists preprocessor.
- */
-function template_preprocess_ding_list_lists(&$variables) {
-  // TODO: If it is intentional that this function should do nothing then at
-  // least add a comment explaining why it is defined.
 }
 
 /**
@@ -170,22 +153,16 @@ function theme_ding_list_lists($variables) {
   foreach ($variables['groups'] as $group_name => $group) {
     $rows = array();
 
-    // TODO: Why is sorting done here. It seems it might as well be done
-    // directly where group is defined before passing it to the theme function.
-    if (isset($group['sort']) && function_exists($group['sort'])) {
-      uasort($group['lists'], $group['sort']);
-    }
-
     foreach ($group['lists'] as $lists) {
       foreach ($lists as $list) {
-        // Remove the #list reference.
-        // TODO: Why?
+        // Remove the #list reference, so the item_list theme doesn't confuse
+        // it with an attribute.
         unset($list['#list']);
         $rows[] = $list;
       }
     }
     
-    $out .= theme_item_list(array(
+    $out .= theme('item_list', array(
       'items' => $rows,
       'title' => $group['title'],
       'type' => 'ul',
@@ -194,7 +171,7 @@ function theme_ding_list_lists($variables) {
   }
 
   // Footer links.
-  $out .= theme_item_list(array(
+  $out .= theme('item_list', array(
     'items' => array(
       l(t("> Mark all notifications as read"), "ding_message/purge_user_messages"),
       l(t("> Create new list"), "list/create"),
@@ -204,6 +181,5 @@ function theme_ding_list_lists($variables) {
     'attributes' => array('class' => array('bottom-links')),
   ));
 
-  // TODO: Should this class be prefixed with ding?
-  return '<div class="user-lists">' . $out . '</div>';
+  return '<div class="ding-user-lists">' . $out . '</div>';
 }

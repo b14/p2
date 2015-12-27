@@ -3,5 +3,4 @@ description = Provides a set of features and hooks to show user profile complete
 package = Ding!
 core = 7.x
 files[] = ding_user_complete.module
-; TODO Why are stylesheets now used here? All other modules use drupal_add_css()
 stylesheets[all][] = css/ding-user-complete.css

@@ -31,16 +31,7 @@ function ting_token_token_info() {
  */
 function ting_token_tokens($type, $tokens, $data = array(), $options = array()) {
   $url_options = array('absolute' => TRUE);
-  if (isset($options['language'])) {
-    $url_options['language'] = $options['language'];
-    // TODO The sanitize variable is never read afterwards?
-    $language_code = $options['language']->language;
-  }
-  else {
-    $language_code = NULL;
-  }
-  // TODO The sanitize variable is never used afterwards?
-  $sanitize = !empty($options['sanitize']);
+  
   $replacements = array();
   if ($type == 'ting') {
     foreach ($tokens as $name => $original) {

@@ -10,6 +10,9 @@ include_once 'ding_interests.serendipity.inc';
 
 // Interests list.
 define('DING_INTERESTS_LIST', 'interests');
+define('DING_INTERESTS_EXISTING', 2);
+define('DING_INTERESTS_INTERESTING', 5);
+define('DING_INTERESTS_NOT_INTERESTING', 0);
 
 /**
  * Implements hook_menu().
@@ -22,49 +25,35 @@ function ding_interests_menu() {
     'description' => 'Setup and configure ding interests.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('ding_interests_admin_form'),
-    'access arguments' => array('administer ding interests'),
+    'access arguments' => array('administer personalisation'),
     'file' => 'ding_interests.admin.inc',
   );
   $items['ding/interests/%ctools_js/%/%user/%'] = array(
     'title' => 'Ding interests add to list',
     'page callback' => 'ding_interests_add_to_list_callback',
     'page arguments' => array(2, 3, 4, 5),
-    // TODO: A more specific access argument would be appropriate here
-    'access arguments' => array('access content'),
+    'access arguments' => array('use personalisation'),
   );
   $items['ding/interests/remove/%ctools_js/%taxonomy_term/%user'] = array(
     'title' => 'Ding interests remove from list',
     'page callback' => 'ding_interests_remove_from_list_callback',
     'page arguments' => array(2, 3, 4, 5),
-    // TODO: A more specific access argument would be appropriate here
-    'access arguments' => array('access content'),
+    'access arguments' => array('use personalisation'),
   );
   $items['ding/interests/overview'] = array(
     'title' => 'List of all recommended subjects',
     'page callback' => 'ding_interests_all_recommended_subjects',
-    'access arguments' => array('access content'),
-    'file' => 'ding_interests.inc',
+    'access arguments' => array('use personalisation'),
   );
 
   return $items;
 }
 
 /**
- * Implements hook_permission().
- */
-function ding_interests_permission() {
-  return array(
-    'administer ding interests' => array(
-      'title' => t('Administer ding interests'),
-    ),
-  );
-}
-
-/**
  * Implements hook_entity_info_alter().
  */
 function ding_interests_entity_info_alter(&$entity_info) {
-  // TODO Why is this needed?
+  // Taxonomy teasers are used for recommending interests.
   if (!isset($entity_info['taxonomy_term']['view modes']['teaser'])) {
     $entity_info['taxonomy_term']['view modes']['teaser'] = array(
       'label' => t('Teaser'),
@@ -74,33 +63,6 @@ function ding_interests_entity_info_alter(&$entity_info) {
 }
 
 /**
- * Define site permissions in code.
- *
- * Create a secure_permissions_data module directory and place this function
- * in secure_permissions_data.module.
- *
- * @param string $role
- *   The role for which the permissions are being requested.
- *
- * @return array
- *   An array defining all the permissions for the site.
- */
-function ding_interests_secure_permissions($role) {
-  $permissions = array(
-    'local administrator' => array('administer ding interests'),
-    // TODO: There is no role in DDB CMS called developer
-    'developer' => array('administer ding interests'),
-  );
-  if (isset($permissions[$role])) {
-    return $permissions[$role];
-  }
-}
-
-/**
- * Implements hook_user_login().
- *
- * TODO This does not look like an implementation of hook_user_login?
- *
  * Synchronize with openlist, create missing lists and update the historical
  * loans list.
  */
@@ -113,7 +75,7 @@ function ding_interests_ding_list_operations() {
       '_data' => array(
         'default_title' => t('Interests'),
         'description' => t('Follow your favorite topics and recieve notifications when new materials arrive. <a href="/ding/interests/overview">Check out recommended topics here</a>'),
-        'yes' => '',
+        'yes' => t('Interests'),
         'no' => t('Topics I have no interrest in.'),
       ),
     ),
@@ -124,44 +86,22 @@ function ding_interests_ding_list_operations() {
  * Implements hook_ding_interaction_view().
  */
 function ding_interests_ding_interaction_view() {
-  // TODO: Should this be a check for a user with the provider role?
   if (user_is_logged_in()) {
-    // TODO Why is ctools ajax needed here?
+    
+    // UI for following interests is ajax time.
     ctools_include('ajax');
     $interests_list = ding_list_get_list(DING_INTERESTS_LIST);
-
-    // TODO: What is this query doing here?
-    // $result = db_query('SELECT
-    // td.tid
-    // FROM
-    // (taxonomy_term_data td
-    // JOIN field_data_field_status fs ON (td.tid = fs.entity_id))
-    // LEFT JOIN
-    // (field_data_field_value fv
-    // JOIN field_data_field_list_objects flo ON
-    // (fv.entity_id = flo.field_list_objects_target_id
-    // AND flo.entity_id = :list_id))
-    // ON (td.tid = fv.field_value_value)
-    // WHERE
-    // fs.field_status_tid = 60
-    // AND fv.field_value_value IS NULL
-    // ORDER BY
-    // RAND()
-    // LIMIT 2', array(':list_id' => $interests_list->id));
 
     // Try to find the correct status tid.
     $status_voc = taxonomy_vocabulary_machine_name_load('interest_status');
     $status_terms = taxonomy_get_tree($status_voc->vid);
-    // TODO What are the hardcoded tid and name doing here?
-    $status_tid = 60;
+
     foreach ($status_terms as $status_term) {
       if ($status_term->name == 'Udvalgt') {
         $status_tid = $status_term->tid;
       }
     }
 
-    // TODO: What is going on here? Could this be achieved by something less
-    // crude than db_query?
     $result = db_query("SELECT
   td.tid, IFNULL(fdfss.field_search_string_value, CONCAT('dc.subject=', td.name)) AS search_string, fv.field_value_value
 FROM
@@ -193,9 +133,6 @@ LIMIT 2", array(':list_id' => $interests_list->id, ':status_tid' => $status_tid)
       }
       $view .= '</div>';
 
-      // TODO: Please remove uncommented code if it is unneeded.
-      // $view = views_embed_view('ding_interests');
-
       if ($view) {
         return $view . "<div class='all-interests'>" . l(t("View all subjects"), "ding/interests/overview") . "</div>";
       }
@@ -208,8 +145,7 @@ LIMIT 2", array(':list_id' => $interests_list->id, ':status_tid' => $status_tid)
  * Implements hook_ding_interaction_info().
  */
 function ding_interests_ding_interaction_info() {
-  // TODO: Should this be a check for the provider role?
-  // Also: Is there any reason why this cannot be displayed for anonymous users?
+
   $active = user_is_logged_in();
   return array(
     'title' => t('Recommended subjects from the library staff'),
@@ -240,8 +176,6 @@ function ding_interests_preprocess_taxonomy_term(&$variables) {
     
     // Show the term if its part of "På baggrund af dine lån foreslår vi emneord".
     // And if the term is "Udvalgt", which is a field set on the term page.
-    // TODO If there are terms with special meaning then please ensure that
-    // they exist through an install hook.
     if ($status == 'Udvalgt' && drupal_is_front_page() || !drupal_is_front_page() || isset($variables['content']['show_anyway'])) {
       $account = $variables['user'];
       $link = l($variables['term_name'], "taxonomy/term/" . $variables['tid']);
@@ -261,15 +195,11 @@ function ding_interests_preprocess_taxonomy_term(&$variables) {
 
       $list = ding_list_get_list(DING_INTERESTS_LIST, $account);
 
-      $value = ding_base_get_value('taxonomy_term', $term, 'field_search_string');
-      if ($value === FALSE) {
-        $value = 'dc.subject=' . $term->name . '';
-      }
+      $value = ding_interest_get_term_cql($term);
+      
       if (!ding_list_has_ding_list_element($list, 'taxonomy_term', $value)) {
-        // TODO There are lots of references to the 5 and 0 rating. Please
-        // extract them as constants.
-        $interest_flag = ding_interests_ajax_button($term, $account, 5);
-        $no_interest_flag = ding_interests_ajax_button($term, $account, 0);
+        $interest_flag = ding_interests_ajax_button($term, $account, DING_INTERESTS_INTERESTING);
+        $no_interest_flag = ding_interests_ajax_button($term, $account, DING_INTERESTS_NOT_INTERESTING);
         $variables['content']['ding_interest_interest_button'] = array(
           '#type' => 'markup',
           '#markup' => $interest_flag,
@@ -318,7 +248,7 @@ function ding_interests_add_to_list_callback($ajax, $term_id, $account, $rating 
     $added_result = ding_interests_add_to_list($term, $account, $rating);
     $list = ding_list_get_list(DING_INTERESTS_LIST, $account);
     // Get ajax button.
-    $link = ($rating == 5) ? l(t('interests'), 'list/' . $list->id) : l(t('not interested'), 'list/' . $list->id);
+    $link = ($rating == DING_INTERESTS_INTERESTING) ? l(t('interests'), 'list/' . $list->id) : l(t('not interested'), 'list/' . $list->id);
     $output = '<div class="response">' . t('Added to !list', array('!list' => $link)) . '</div>';
 
     if (!isset($_GET['frombutton'])) {
@@ -327,28 +257,24 @@ function ding_interests_add_to_list_callback($ajax, $term_id, $account, $rating 
       $commands[] = ajax_command_replace($identifier, $output);
     }
     else {
-      if ($added_result === 1) {
-        $response = t('Added to !name', array('!name' => l($list->title, 'list/' . $list->id)));
+      if ($added_result === DING_INTERESTS_EXISTING) {
+        $response = t('Already added to !name', array('!name' => l($list->title, 'list/' . $list->id)));
         $commands[] = ajax_command_ding_popup('ding_list', t('List'), '<div class="ding-list-message">' . $response . '</div>');
       }
       else {
-        $response = t('Already added to !name', array('!name' => l($list->title, 'list/' . $list->id)));
+        $response = t('Added to !name', array('!name' => l($list->title, 'list/' . $list->id)));
         $commands[] = ajax_command_ding_popup('ding_list', t('List'), '<div class="ding-list-message">' . $response . '</div>');
       }
     }
 
-    if ($rating > 0) {
-      // TODO This adds a dependency to ding_serendipity. This has not been
-      // declared.
+    if ($rating > DING_INTERESTS_NOT_INTERESTING) {
       $commands[] = ding_serendipity_command_refresh(array('interest' => $term->tid, 'plugins' => array('ding_interests_materials')));
     }
     // Return output.
-    // TODO Please use ajax_deliver().
-    print ajax_render($commands);
-    exit;
+    ajax_deliver($commands);
   }
   else {
-    // TODO Is there really nothing we can do for non-AJAX requests?
+    // Ajax required.
     return '';
   }
 }
@@ -370,9 +296,7 @@ function ding_interests_add_to_list_callback($ajax, $term_id, $account, $rating 
 function ding_interests_remove_from_list_callback($ajax, $term, $account) {
   if ($ajax) {
 
-    // Add to interests list.
-    // TODO Why do we call ding_interests_add_to_list() in a callback that
-    // should remove from a list?
+    // Add to interests list ignore/not interested list.
     ding_interests_add_to_list($term, $account, $rating);
     // Get ajax button.
     $output = ding_interests_ajax_button($term, $account, $rating);
@@ -380,12 +304,10 @@ function ding_interests_remove_from_list_callback($ajax, $term, $account) {
     $identifier = '#taxonomy-term-' . $term->tid . ' .add-to-list';
     $commands[] = ajax_command_replace($identifier, $output);
     // Return output.
-    // TOOD Please use ajax_deliver().
-    print ajax_render($commands);
-    exit;
+    ajax_deliver($commands);
   }
   else {
-    // TODO Is there really nothing we can do for non-AJAX requests?
+    // Ajax required.
     return '';
   }
 }
@@ -400,30 +322,30 @@ function ding_interests_remove_from_list_callback($ajax, $term, $account) {
  * @rating number
  *   The rating to give the element.
  *
- * TODO Please document or change return values. These integers look odd.
+ * @return
+ *    False if the interest was inserted as a new interest
+ *    DING_INTERESTS_EXISTING is the interest was already existing
+ *    
  */
 function ding_interests_add_to_list($term, $account, $rating) {
   // Get the historical loan list.
   $list = ding_list_get_list(DING_INTERESTS_LIST, $account);
 
-  // TODO I see this snippet repeated several times in the codebase. Could
-  // this be refactored into a shared method?
-  $value = ding_base_get_value('taxonomy_term', $term, 'field_search_string');
-  if ($value === FALSE) {
-    $value = 'dc.subject="' . $term->name . '"';
-  }
+  
+  $value = ding_interest_get_term_cql($term);
 
   if (!ding_list_has_ding_list_element($list, 'taxonomy_term', $value)) {
     $values = array(
       'search_title' => $term->name,
       'value' => $value,
-      'state' => ($rating > 0) ? 'yes' : 'no',
+      'state' => ($rating > DING_INTERESTS_NOT_INTERESTING) ? 'yes' : 'no',
     );
     ding_list_create_ding_list_element($list, 'taxonomy_term', $values, $account, TRUE);
 
-    return 1;
+    return false;
   }
-  return 2;
+  
+  return DING_INTERESTS_EXISTING;
 }
 
 /**
@@ -441,7 +363,7 @@ function ding_interests_add_to_list($term, $account, $rating) {
  * @return string
  *   The ajax buttom markup.
  */
-function ding_interests_ajax_button($term, $account, $rating = 5, $remove = FALSE, $titles = array()) {
+function ding_interests_ajax_button($term, $account, $rating = DING_INTERESTS_INTERESTING, $remove = FALSE, $titles = array()) {
   // Include ctools ajax.
   ctools_include('ajax');
   $commands = array();
@@ -461,8 +383,8 @@ function ding_interests_ajax_button($term, $account, $rating = 5, $remove = FALS
   }
 
   // Rating 5 means interested.
-  $title = ($rating == 5) ? $titles['yes'] : $titles['no'];
-  $class = ($rating == 5) ? "yes" : "no";
+  $title = ($rating == DING_INTERESTS_INTERESTING) ? $titles['yes'] : $titles['no'];
+  $class = ($rating == DING_INTERESTS_INTERESTING) ? "yes" : "no";
   // Create ajax button.
   $output = ctools_ajax_text_button($title, $path, $title, "add-to-list transparent-button $class");
   return $output;
@@ -473,7 +395,6 @@ function ding_interests_ajax_button($term, $account, $rating = 5, $remove = FALS
  *
  * @param string $type
  *   The element type.
- * TODO Please document the boolean default as well.
  *
  * @return array
  *   An array of elements.
@@ -497,14 +418,10 @@ function ding_interests_get_list_elements($type = FALSE) {
 /**
  * Get random interest element.
  *
- * @param string $type
- *   The element type.
- *
  * @return object
  *   Taxonomy term corresponding to the interest.
  */
-function ding_interests_get_random_interest_term($type = 'interests') {
-  // TODO The $type parameter is never used?
+function ding_interests_get_random_interest_term() {
   $term = ding_interests_get_random_list_item();
   return $term;
 }
@@ -513,10 +430,6 @@ function ding_interests_get_random_interest_term($type = 'interests') {
  * Implements hook_user_complete().
  */
 function ding_interests_ding_user_complete() {
-  // TODO Unused variables and dead code here. Please fix or remove.
-  $interests = ding_interests_get_random_list_item();
-  $no_interest = ding_interests_get_random_list_item();
-  // (!empty($interest) || !empty($no_interest));
   $complete = FALSE;
   return array(
     'ding_interests' => array(
@@ -547,7 +460,6 @@ function ding_interests_get_random_list_item() {
 
   // @TODO: add criteria to ding_list_load_elements so we dont have to load all
   // @TODO: add get random elements to ding_list
-  // TODO: Yes please - or separate loading of ids and entities here if possible
   $items = ding_list_load_elements($list);
   $buffer = array();
   foreach ($items as $item) {
@@ -582,34 +494,6 @@ function ding_interests_get_random_list_item() {
   return array_values($terms)[0];
 }
 
-/**
- * Implements hook_views_data().
- */
-function ding_interests_views_data() {
-  $data = array();
-  // Specialized is null/is not null filter.
-  $data['taxonomy_term_data']['ding_interests'] = array(
-    'group' => t('Ding'),
-    'title' => t('Ding interests'),
-    'help' => t('Filter to ensure content has or has not been added to interests.'),
-    'table_alias' => 'taxonomy_term_data',
-    'real field' => 'tid',
-    'filter' => array(
-      'handler' => 'ding_interests_handler_filter_interests',
-      'label' => t('Interests'),
-    ),
-    'relationship' => array(
-      'list type' => 'interests',
-      'handler' => 'ding_interests_handler_relationship_content',
-      'label' => t('Ding interest'),
-      'base' => 'field_data_field_value',
-      'base field' => 'field_value_value',
-      'relationship field' => 'tid',
-    ),
-  );
-
-  return $data;
-}
 
 /**
  * Implements hook_theme().
@@ -626,8 +510,7 @@ function ding_interests_theme($existing, $type, $theme, $path) {
 }
 
 /**
- * Todo: doc here.
- * TODO Yes please
+ * Preprocess function for Ding interests: Overview.
  */
 function template_preprocess_ding_interests_tree(&$variables) {
   $voc = taxonomy_vocabulary_machine_name_load('ding_content_tags');
@@ -716,34 +599,47 @@ function ding_interests_ctools_plugin_directory($owner, $plugin_type) {
  * Get the status granted and denied tids.
  */
 function ding_interests_get_status_tids() {
-  // let's assume this module was just installed and check.
-  // whether the access granted or denied terms even exist.
+  // Get access granted or denied term tids.
   $vocab = taxonomy_vocabulary_machine_name_load('interest_status');
   $tree = taxonomy_get_tree($vocab->vid);
-  if (empty($tree)) {
-    // Create the two terms granted and denied.
-    // TODO: This should be done at install time - not run time.
-    $term = new stdClass();
-    $term->name = 'Udvalgt';
-    $term->vid = $vocab->vid;
-    taxonomy_term_save($term);
-    $term2 = new stdClass();
-    $term2->name = 'Fravalgt';
-    $term2->vid = $vocab->vid;
-    taxonomy_term_save($term2);
-    $access['granted'] = $term->tid;
-    $access['denied'] = $term2->tid;
-  }
-  else {
-    foreach ($tree as $term) {
-      if ($term->name == 'Fravalgt') {
-        $access['denied'] = $term->tid;
-      }
-      elseif ($term->name == 'Udvalgt') {
-        $access['granted'] = $term->tid;
-      }
+
+  foreach ($tree as $term) {
+    if ($term->name == 'Fravalgt') {
+      $access['denied'] = $term->tid;
+    }
+    elseif ($term->name == 'Udvalgt') {
+      $access['granted'] = $term->tid;
     }
   }
 
   return $access;
+}
+
+/**
+ * To-do: doc here.
+ */
+function ding_interests_all_recommended_subjects() {
+  // @TODO grouped list of highlighted subjects.
+
+  return '<h1>' . t('The librarys selected subjects') . '</h1>' . theme('ding_interests_tree');
+}
+
+/**
+ * Create CQL to lookup results for a term.
+ * 
+ * @param term
+ *    The term to look up
+ * 
+ * @return string 
+ *    The CQL to lookup the term in Brønden.
+ */
+function ding_interest_get_term_cql($term) {
+  // Check if term has a specific CQL already set
+  $value = ding_base_get_value('taxonomy_term', $term, 'field_search_string');
+  
+  // Fallback to dc.subject
+  if ($value === FALSE) {
+    $value = 'dc.subject=' . $term->name . '';
+  }
+  return $value;
 }

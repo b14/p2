@@ -85,12 +85,12 @@ function ding_special_user_views_default_views() {
   /* Felt: Profil: Kategori */
 
 
-  $handler->display->display_options['fields']['field_kategori']['id'] = 'field_kategori';
-  $handler->display->display_options['fields']['field_kategori']['table'] = 'field_data_field_kategori';
-  $handler->display->display_options['fields']['field_kategori']['field'] = 'field_kategori';
-  $handler->display->display_options['fields']['field_kategori']['relationship'] = 'profile';
-  $handler->display->display_options['fields']['field_kategori']['type'] = 'taxonomy_term_reference_plain';
-  $handler->display->display_options['fields']['field_kategori']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_category']['id'] = 'field_category';
+  $handler->display->display_options['fields']['field_category']['table'] = 'field_data_field_category';
+  $handler->display->display_options['fields']['field_category']['field'] = 'field_category';
+  $handler->display->display_options['fields']['field_category']['relationship'] = 'profile';
+  $handler->display->display_options['fields']['field_category']['type'] = 'taxonomy_term_reference_plain';
+  $handler->display->display_options['fields']['field_category']['delta_offset'] = '0';
   /* Sorteringskriterie: Bruger: Reserveringsdato */
 
 
@@ -107,16 +107,16 @@ function ding_special_user_views_default_views() {
   $handler->display->display_options['filters']['status']['value'] = '1';
   $handler->display->display_options['filters']['status']['group'] = 1;
   $handler->display->display_options['filters']['status']['expose']['operator'] = FALSE;
-  /* Filterkriterie: Profil: Kategori (field_kategori) */
+  /* Filterkriterie: Profil: Kategori (field_category) */
 
 
-  $handler->display->display_options['filters']['field_kategori_tid']['id'] = 'field_kategori_tid';
-  $handler->display->display_options['filters']['field_kategori_tid']['table'] = 'field_data_field_kategori';
-  $handler->display->display_options['filters']['field_kategori_tid']['field'] = 'field_kategori_tid';
-  $handler->display->display_options['filters']['field_kategori_tid']['relationship'] = 'profile';
-  $handler->display->display_options['filters']['field_kategori_tid']['operator'] = 'not empty';
-  $handler->display->display_options['filters']['field_kategori_tid']['type'] = 'select';
-  $handler->display->display_options['filters']['field_kategori_tid']['vocabulary'] = 'special_user_category';
+  $handler->display->display_options['filters']['field_category_tid']['id'] = 'field_category_tid';
+  $handler->display->display_options['filters']['field_category_tid']['table'] = 'field_data_field_category';
+  $handler->display->display_options['filters']['field_category_tid']['field'] = 'field_category_tid';
+  $handler->display->display_options['filters']['field_category_tid']['relationship'] = 'profile';
+  $handler->display->display_options['filters']['field_category_tid']['operator'] = 'not empty';
+  $handler->display->display_options['filters']['field_category_tid']['type'] = 'select';
+  $handler->display->display_options['filters']['field_category_tid']['vocabulary'] = 'special_user_category';
 
   /* Display: Content pane */
 

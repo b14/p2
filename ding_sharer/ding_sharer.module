@@ -17,19 +17,10 @@ function ding_sharer_ctools_plugin_directory($owner, $plugin_type) {
  * Implements hook_html_head_alter().
  */
 function ding_sharer_html_head_alter(&$head_elements) {
-  // TODO: How about using menu_get_object() here?
-  if (arg(0) === 'ting' && arg(1) === 'object' && arg(2)) {
-    $local_id = explode(':', arg(2));
-    $local_id = $local_id[1];
-
-    // TODO This creates a undeclared dependency to the ding_campaign module.
-    // This is rather odd. Could we create a preset of our own?
-    // TODO This creates a dependency to ting_covers.
-    $image_url = image_style_url('ding_campaign_w_380', ting_covers_object_path($local_id));
-    if (file_exists($image_url)) {
-      // TODO Why call file_get_contents here?
-      file_get_contents($image_url);
-
+  if ($ting_object = menu_get_object('ting_object', 2)) {
+    $cover_path = ting_covers_object_path($ting_object->localId);
+    $image_url = image_style_url('ding_sharer', $cover_path);
+    if (file_exists($cover_path)) {
       $head_elements['ogurl'] = array(
         '#type' => 'html_tag',
         '#tag' => 'meta',
@@ -40,4 +31,35 @@ function ding_sharer_html_head_alter(&$head_elements) {
       );
     }
   }
+}
+
+/**
+ * Implements hook_image_default_styles().
+ */
+function ding_campaign_image_default_styles() {
+  $styles = array();
+  
+  $styles['ding_sharer'] = array(
+    'name' => 'ding_sharer',
+    'effects' => array(
+      5 => array(
+        'label' => 'Scale',
+        'help' => 'Scaling will maintain the aspect-ratio of the original image. If only a single dimension is specified, the other dimension will be calculated.',
+        'effect callback' => 'image_scale_effect',
+        'dimensions callback' => 'image_scale_dimensions',
+        'form callback' => 'image_scale_form',
+        'summary theme' => 'image_scale_summary',
+        'module' => 'image',
+        'name' => 'image_scale',
+        'data' => array(
+          'width' => 380,
+          'height' => '',
+          'upscale' => 1,
+        ),
+        'weight' => 1,
+      ),
+    ),
+    'label' => 'ding_sharer',
+  );
+  return $styles;
 }

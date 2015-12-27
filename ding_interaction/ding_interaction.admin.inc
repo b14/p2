@@ -15,6 +15,7 @@ function ding_interaction_admin_overview($form, &$form_state) {
     '#title' => t('Ding interaction settings'),
     // TODO Is there any reason behind these weights? Is it not sufficient to
     // render them in the order they are added?
+    // - No other reason than it looks nicer in this order..
     '#weight' => 5,
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
@@ -70,23 +71,6 @@ function ding_interaction_admin_overview($form, &$form_state) {
   }
   $form['ding_interaction_weights'] = array(
     '#type' => 'value',
-  );
-
-  $form['ding_interaction_help'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Ding interaction help'),
-    '#weight' => 6,
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
-  );
-  $form['ding_interaction_help']['markup'] = array(
-    '#type' => 'markup',
-    '#markup' => t('Ding Interactions are all sorts of information and interaction with the user which we want to present in rotation. In order not to overload the user with information, just one Ding Interaction is shown per page view. This way the user can casually be informed with deeper features of the website, occasionally be asked to interact (Like when asking the user to rate previous loans) and have an area which changes relevant content with no need for manual editing or administration.<br /><br />
-Insert a "Ding interaction pane" on any page to display the Ding Interactions in rotation.') . '<br /><br />' .
-    l(t('> Overview of all manual Ding Interactions'), 'admin/structure/entity-type/ding_type/ding_interaction') .
-    '<br />' .
-    l(t('> Create new manual Ding Interaction'), 'admin/structure/entity-type/ding_type/ding_interaction/add') .
-    '<br /><br />' . 'Developers can use the API hooks to create new Ding Interactions.',
   );
 
   return system_settings_form($form);

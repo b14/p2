@@ -50,15 +50,12 @@ function ding_serendipity_taxonomy_term_serendipity_info() {
 function ding_serendipity_taxonomy_term_recommended_objects_serendipity_add($context) {
 
   // No term no result @todo recommended among recent.
-  // TODO Why check taxonomy_tid twice? Is the check for nummeric not enough?
-  // TODO Why not do this if in a ting_object context?
-  if (isset($context['recent']) || !isset($context['taxonomy_tid']) || !is_numeric($context['taxonomy_tid']) || !isset($context['bundle']) || ($context['bundle'] != 'ting_object')) {
+  if (isset($context['recent']) || !is_numeric($context['taxonomy_tid']) || !isset($context['bundle']) || ($context['bundle'] != 'ting_object')) {
     return array();
   }
 
   $term = taxonomy_term_load($context['taxonomy_tid']);
 
-  // TODO Where is this field defined? I could not spot it in the codebase
   $result = ding_serendipity_taxonomy_term_fetch_ting_objects('field_taxonomy_ting_objects', $term);
   return $result;
 }
@@ -70,24 +67,21 @@ function ding_serendipity_taxonomy_term_recommended_objects_serendipity_add($con
  */
 function ding_serendipity_taxonomy_term_recent_serendipity_add($context) {
   $term_arr = ding_serendipity_taxonomy_get_term($context);
-
+  
   // Validate context.
   if ($term_arr === FALSE || !isset($context['recent'])) {
     return array();
   }
 
+  $facets = array();
   $term = $term_arr['term'];
 
   // Select content from this year.
-  // TODO $year variable is never user?
-  $year = date('Y');
-  // TODO Why choose 16 as a limit here?
   $limit = (is_numeric($context['max'])) ? $context['max'] : 16;
 
   $term_arr['query'] = ding_list_convert_cql($term_arr['query']);
 
   // Apply term query.
-  // TODO $facets is not defined as an array at this point?
   $facets[] = $term_arr['query'];
 
   $query = implode(' AND ', $facets);
@@ -108,13 +102,10 @@ function ding_serendipity_taxonomy_term_recent_serendipity_add($context) {
  * Fetch content related to the term in context.
  */
 function ding_serendipity_taxonomy_term_related_by_term_serendipity_add($context) {
-  // TODO $user is never used?
-  global $user;
 
   // No term no result.
   $term_arr = ding_serendipity_taxonomy_get_term($context);
 
-  // TODO Why is this not used if recent context is set?
   if ($term_arr === FALSE || isset($context['recent'])) {
     return array();
   }
@@ -126,8 +117,8 @@ function ding_serendipity_taxonomy_term_related_by_term_serendipity_add($context
   $results = array();
   if ($context['bundle'] == 'ting_object') {
     $results = ding_serendipity_do_search($query, array('limit' => $context['min']));
-    // TODO Why does the description differ depending on the frontpage context?
-    // I cannot see anywhere that context is checked in this function.
+
+    // Frontpage could be a taxonomy term
     $description = t('This content has been promoted to you by the library.');
     if ($context['frontpage'] !== TRUE) {
       $description = t('Content connected to the current term');
@@ -139,9 +130,6 @@ function ding_serendipity_taxonomy_term_related_by_term_serendipity_add($context
     }
   }
   else {
-    // TODO How is this relevant to the term context? The code branch never
-    // seems to refer to the term.
-    // It seems like it should be in a separate serendipity plugin.
     if (!empty($context['frontpage'])) {
       // Fetch promoted to frontpage nodes of the desired type.
       $nodequery = new EntityFieldQuery();
@@ -180,8 +168,6 @@ function ding_serendipity_taxonomy_term_related_by_term_serendipity_add($context
           'type' => 'node',
           'id' => $node->nid,
           'info' => array(
-            // TODO These results do not seem to have anything to do with
-            // library promotions?
             'description' => t('This content has been promoted to you by the library.'),
           ),
         );

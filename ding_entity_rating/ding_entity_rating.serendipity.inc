@@ -4,7 +4,7 @@
  * @file
  * This module provides serendipity functions based on user lists and loans
  */
-
+ 
 /**
  * Implements hook_serendipity_info().
  */
@@ -31,7 +31,7 @@ function ding_entity_rating_serendipity_info() {
  */
 function ding_entity_rating_materials_by_rating_serendipity_add($context) {
   global $user;
-  // TODO why do we return an empty array is we are not on the frontpage?
+  // TODO why do we return an empty array is we are not on the frontpage? @MSD
   if (!user_is_logged_in() || !$context['frontpage']) {
     return array();
   }
@@ -43,7 +43,7 @@ function ding_entity_rating_materials_by_rating_serendipity_add($context) {
   }
   else {
     // Get entity from context.
-    // TODO what if rated_entity is not defined within the context?
+    // TODO what if rated_entity is not defined within the context? @MSD
     $ting_object = ding_entity_load($context['rated_entity'], 'ting_object');
   }
   
@@ -56,8 +56,7 @@ function ding_entity_rating_materials_by_rating_serendipity_add($context) {
       $facets[] = 'facet.subject="' . $facet . '"';
     }
 
-    // Build subject array.
-    // TODO Comment refers to subjects but extracts creators?
+    // Build author array.
     if (count($facets) == 0) {
       $authors = $ting_object->getCreators();
       foreach ($authors as $author) {
@@ -75,7 +74,7 @@ function ding_entity_rating_materials_by_rating_serendipity_add($context) {
 
     foreach ($results as & $item) {
       $item['info'] = array(
-        // TODO is it intentional that Query is uppercase?
+        // TODO is it intentional that Query is uppercase? @MSD
         'Query' => $query,
         'description' => t(
           'Because you liked !item',
@@ -115,17 +114,14 @@ function ding_entity_rating_get_material_by_rating() {
   }
   
   // Start at 5 (the max rating).
-  // TODO Please move this to a constant. I see other references to 5
   // being the max rating in the codebase.
-  $rating = 5;
+  $rating = DING_INTERESTS_INTERESTING;
   // And keep trying till this minimum rating.
   $min_rating = 3;
 
   // Fetch a rated element from the group of highest rated elements.
-  // TODO This while loop was hard to understand. Here is an attempt at
-  // refactoring.
   $rated_element = NULL;
-  for ($rating = 5; $rating >= $min_rating; $rating--) {
+  while (is_null($rated_element)) {
     if (!empty($ratings[$rating])) {
       $random_key = array_rand($ratings[$rating]);
       $rated_element = $ratings[$rating][$random_key];

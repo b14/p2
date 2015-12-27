@@ -7,4 +7,5 @@ dependencies[] = ding_provider
 dependencies[] = ding_base
 dependencies[] = ding_popup
 dependencies[] = ding_entity
+dependencies[] = ting
 configure = admin/config/ding/serendipity

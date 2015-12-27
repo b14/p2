@@ -6,6 +6,42 @@
  */
 
 /**
+ * Reorder a list.
+ *
+ * @param string $list_id
+ *   The ID of the list.
+ *
+ * @return array
+ *   Ajax commands, with information about the process.
+ */
+function ding_list_set_order_callback($list_id) {
+  if (empty($list_id) || !isset($_POST['item']) || !isset($_POST['previous'])) {
+    return drupal_json_encode(array(
+      'status' => FALSE,
+    ));
+  }
+  $list = ding_list_get_list($list_id);
+
+  $item = entity_load_single('ding_type', $_POST['item']);
+  $previous = FALSE;
+  if (isset($_POST['item'])) {
+    $previous = entity_load_single('ding_type', $_POST['previous']);
+  }
+  ding_list_set_element_position($list, $item, $previous);
+
+  $html = t('List changed');
+  $status = array('status' => TRUE);
+  $commands = array();
+
+  $commands[] = ajax_command_changed('#' . $context['html_id'], $html);
+
+  return array(
+    '#type' => 'ajax',
+    '#commands' => $commands,
+  );
+}
+
+/**
  * Attach an element to a list.
  *
  * @param string $type
@@ -70,12 +106,9 @@ function ding_list_attach_element_callback($type, $list_id, $value) {
  * @return array
  *   Ajax commands, with information about the process.
  */
-// TODO This seems to be a callback. I would appreciate naming it as such.
-function ding_list_remove_element_from_list($list_id, $element_id) {
+// @TODO: PBJ: Ryk til FKB modul
+function ding_list_remove_element_from_list_callback($list_id, $element_id) {
   $list = ding_list_get_list($list_id);
-  // TODO Getting the html id in each of these methods involve retrieving a
-  // query parameter and do nothing to check whether it is defined etc.
-  // Is this standard way of doing this? Could we wrap it to make it a bit nicer?
   $context = drupal_get_query_parameters();
   if (ding_list_detach_ding_list_element($list, explode(',', $element_id)) !== FALSE) {
     $html = t('Removed from !name', array('!name' => l($list->title, 'user/list/' . $list->id)));
@@ -123,42 +156,6 @@ function ding_list_delete_list_callback($list_id) {
   $commands = array();
   $context = drupal_get_query_parameters();
   $commands[] = ajax_command_append('#' . $context['html_id'], $html, $status);
-
-  return array(
-    '#type' => 'ajax',
-    '#commands' => $commands,
-  );
-}
-
-/**
- * Reorder a list.
- *
- * @param string $list_id
- *   The ID of the list.
- *
- * @return array
- *   Ajax commands, with information about the process.
- */
-function ding_list_set_order_callback($list_id) {
-  if (empty($list_id) || !isset($_POST['item']) || !isset($_POST['previous'])) {
-    return drupal_json_encode(array(
-      'status' => FALSE,
-    ));
-  }
-  $list = ding_list_get_list($list_id);
-
-  $item = entity_load_single('ding_type', $_POST['item']);
-  $previous = FALSE;
-  if (isset($_POST['item'])) {
-    $previous = entity_load_single('ding_type', $_POST['previous']);
-  }
-  ding_list_set_element_position($list, $item, $previous);
-
-  $html = t('List changed');
-  $status = array('status' => TRUE);
-  $commands = array();
-
-  $commands[] = ajax_command_changed('#' . $context['html_id'], $html);
 
   return array(
     '#type' => 'ajax',

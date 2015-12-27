@@ -5,12 +5,9 @@
 
 (function ($) {
 
-  // TODO If the behavior belongs to the ding_message module it should
-  // be called something with ding_message. The current name clashed with
-  // ding_interaction.
-  // TODO This behavior has no documentation. Please add code comments explaning
-  // what is going on and why.
-  Drupal.behaviors.ding_interaction = {
+  // Handle display of new content in the search by marking new since last check.
+  // We add a star to show that the content is new.
+  Drupal.behaviors.ding_message = {
     attach: function (context, settings) {
       $('.ding-message a, a.ding-message-link', context).each(function() {
         $(this).on('click',function(evt) {

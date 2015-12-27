@@ -1,6 +1,8 @@
 /**
  * @file
  * Ding sharer
+ *
+ * Sharing is done JS time, to enable the use of window.open().
  */
 (function ($) {
   "use strict";
@@ -10,8 +12,6 @@
     
       $('a.sharer-button', context).bind('click', function (evt) {
         evt.preventDefault();
-
-        // TODO Why is there a need to involve JavaScript in all this?
         var
           share_url = encodeURIComponent(location.href),
           title = encodeURIComponent(document.title),

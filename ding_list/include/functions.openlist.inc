@@ -124,8 +124,7 @@ function ding_list_sync_openlist($account = NULL) {
     if (isset($list_map[$openlist_list['list_id']])) {
       $local_list = &$list_map[$openlist_list['list_id']];
 
-      // We only edit the list if its status is 1.
-      // TODO: Why? What does status = 1 mean.
+      // We only edit the list is active (status = 1).
       if ($openlist_list['status'] == 1) {
         if (!isset($openlist_list['data']['fields']) || !is_array($openlist_list['data']['fields'])) {
           $openlist_list['data']['fields'] = array();
@@ -139,8 +138,7 @@ function ding_list_sync_openlist($account = NULL) {
     }
     // The list is not present in the local database, so we need to create it.
     else {
-      // We only create the list, if it has the status of 1
-      // TODO See comment regarding why aboce.
+      // We only create the list, if it is active (status = 1).
       if ($openlist_list['status'] == 1) {
         if (!isset($openlist_list['data']['fields']) || !is_array($openlist_list['data']['fields'])) {
           $openlist_list['data']['fields'] = array();
@@ -168,19 +166,18 @@ function ding_list_sync_openlist($account = NULL) {
 
     // The element already exists, so we need to either edit or delete it.
     if (isset($element_map[$openlist_element['element_id']])) {
-      // We only edit the list if its status is 1
+      // We only edit the list  if it is active (status = 1).
       if ($openlist_element['status'] == 1) {
         $local_element = $element_map[$openlist_element['element_id']];
         $local_list = &$list_map[$openlist_element['list_id']];
 
         $values = array();
-        // Old openlist save method.
-        // TODO Why do we need to support the legacy mode?
+        
+        // Old version openlist saved object used id instead of value.
         if (isset($openlist_element['data']['id'])) {
           $values = array(
             'value' => $openlist_element['data']['id'],
           );
-          // New openlist save method.
         }
         else {
           $values = $openlist_element['data'];
@@ -193,7 +190,8 @@ function ding_list_sync_openlist($account = NULL) {
           FALSE
         );
 
-        // TODO A comment explaining what is going on here would be nice.
+        // If the elemen has a previous id, get the element from the element
+        // map.
         if ($openlist_element['previous'] > 0) {
           $previous_element = $element_map[$openlist_element['previous']];
         }
@@ -245,8 +243,7 @@ function ding_list_sync_openlist($account = NULL) {
         $save_list[$openlist_element['list_id']] = $openlist_element['modified'];
 
         $values = array();
-        // Old openlist save method.
-        // TODO: Why do we need to support the old method?
+        // Old version openlist saved object used id instead of value.
         if (isset($openlist_element['data']['id'])) {
           $values = array(
             'value' => $openlist_element['data']['id'],

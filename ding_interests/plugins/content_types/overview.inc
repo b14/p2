@@ -9,11 +9,6 @@ $plugin = array(
   'title' => t('Ding interests: Overview'),
   'description' => '',
   'single' => TRUE,
-  // TODO Please remove dead code
-  // 'content_types' => array('list'),
-  // 'content_types' => array('taxonomy_term'),
-  // 'required context' =>
-  // new ctools_context_required(t('Term'), 'taxonomy_term'),
   'category' => t('Ding!'),
   'render callback' => 'ding_interests_overview_content_type_render',
 );

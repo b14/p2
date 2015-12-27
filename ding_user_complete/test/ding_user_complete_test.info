@@ -4,5 +4,3 @@ package = Ding!
 version = "7.x-1.x-dev"
 core = 7.x
 files[] = ding_user_complete_test.module
-;dependencies[] = ding_provider
-;configure = admin/config/ding/serendipity

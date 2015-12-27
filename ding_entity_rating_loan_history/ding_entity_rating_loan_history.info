@@ -2,9 +2,10 @@ name = Ding entity rating by loan history
 description = Suggest entities to rate based on the uses loan history.
 package = Ding!
 core = 7.x
-; TODO: The files[] declaration should not be necessary.
-files[] = ding_entity_rating_loan_history.module
+
 dependencies[] = ding_entity_rating
 dependencies[] = ding_user_consent
+dependencies[] = ding_interests
 dependencies[] = ding_loan
 dependencies[] = ting
+dependencies[] = ting_carousel

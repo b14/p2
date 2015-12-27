@@ -25,9 +25,10 @@ function ding_list_add_list_content_type_render($subtype, $conf, $panel_args, $c
 
   $block = new stdClass();
   $block->content = array();
-  // TODO Why is there an access check required here?
+  
+  // Users can only add lists they don't own.
   if ($list->uid != $user->uid) {
-    $block->content = drupal_get_form('ding_list_add_element_form', 'ding_list', $list->id, '@list');
+    $block->content = drupal_get_form('ding_list_add_element_form', 'ding_list', $list->id, t('Add to lists I follow'));
   }
 
   return $block;

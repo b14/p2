@@ -23,7 +23,7 @@
         // Prevent double click to select text.
         .disableSelection();
       if(this.options.submitted === false) {
-        var _star = $('.star', this.element).hover(this.starMouseIn, this.startMouseOut);
+        var _star = $('.star', this.element).hover(this.starMouseIn, this.starMouseOut);
         _star.click(this.starClick);
       }
       this._refresh();
@@ -42,7 +42,6 @@
      * @param Event evt
      *   Mouseenter event
      */
-      // TODO: Should this be startMouseIn?
     starMouseIn: function(evt) {
       var $this = $(this);
       $this.parent().children('.submitted').addClass('has-sub').removeClass('submitted');
@@ -57,7 +56,7 @@
      * @param Event evt
      *   Mouseleave event
      */
-    startMouseOut: function(evt) {
+    starMouseOut: function(evt) {
       var $this = $(this);
       $this.parent().children('.has-sub').addClass('submitted').removeClass('has-sub');
       $this.removeClass('active');

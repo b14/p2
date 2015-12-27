@@ -115,19 +115,29 @@ function ding_list_get_lists($list_type = NULL, $account = NULL, $range = array(
  * A ding_list_element should not exist without it being attached to a list,
  * which is why the create function will automatically attach it to a list.
  *
- * TODO Please add documentation of function parameters.
+ * @param object $list
+ *   The list to attach the element to.
+ * @param string $type
+ *   Type of the element.
+ * @param array $values
+ *   An array of elements
+ * @param object $account
+ *   The user attaching the element
+ * @param boolean $save_list
+ *   Automatically save the list after the element is attached.
+ *   It's useful not to auto save the list if multiple elements are added at
+ *   once.
+ * @param int $openlist_id
+ *   The Openlist id. If not set it will automatically set it.
  *
  * @return mixed
  *   The ding_list_element object.
  */
 function ding_list_create_ding_list_element(&$list, $type, $values, $account = NULL, $save_list = TRUE, $openlist_id = FALSE) {
-  // Open a transaction, so we can rollback if ting_openlist fails.
-  $transaction = db_transaction();
 
   $element = entity_create('ding_type', array(
     'type' => 'ding_list_element',
-    // TODO Why is this format necessary?
-    'title' => '[' . $list->id . ']' . $list->title . ': ' . $type . ' [' . $values['value'] . ']',
+    'title' => $type . ': ' . $values['value'],
   ));
 
   if ($element === FALSE) {
@@ -152,9 +162,6 @@ function ding_list_create_ding_list_element(&$list, $type, $values, $account = N
       $openlist_id = ding_provider_invoke('openlist', 'request', 'createElement', array($list->openlist_id, $openlist_data));
     }
     catch (Exception $e) {
-      $transaction->rollback();
-      // TODO If this is an API function then it should be up to the caller to
-      // determine how an error an error should be reported.
       drupal_set_message(t("An error occurred, your element wasn't created. Please contact the administrator if this problem persists."), 'error');
       return FALSE;
     }
@@ -202,9 +209,6 @@ function ding_list_create_ding_list_element(&$list, $type, $values, $account = N
  *   Newly created list element, or FALSE if not created.
  */
 function ding_list_create_ding_list($title, $type = DING_LIST_TYPE_USER_LIST, $account = NULL, $more = NULL, $openlist_id = NULL, $fields = array()) {
-  // Open a transaction, so we can rollback if ting_openlist
-  $transaction = db_transaction();
-
   $list = entity_create('ding_type', array(
       'type' => 'ding_list',
       'title' => $title,
@@ -221,10 +225,6 @@ function ding_list_create_ding_list($title, $type = DING_LIST_TYPE_USER_LIST, $a
   if ($more !== NULL) {
     $list->more = $more;
   }
-  // TODO How could more be set on the list at this point?
-  elseif (isset($list->more)) {
-    $more = $list->more;
-  }
 
   ding_list_handle_fields_in_list($list, $fields);
 
@@ -238,9 +238,6 @@ function ding_list_create_ding_list($title, $type = DING_LIST_TYPE_USER_LIST, $a
       ));
     }
     catch (Exception $e) {
-      $transaction->rollback();
-      // TODO If this is an API function then it should be up to the caller to
-      // determine how an error an error should be reported.
       drupal_set_message(t("An error occurred, your list wasn't created. Please contact the administrator if this problem persists."), 'error');
       return FALSE;
     }
@@ -309,11 +306,6 @@ function ding_list_handle_fields_in_list(&$list, $fields) {
  *   The ding_list object or FALSE if edit failed.
  */
 function ding_list_edit_ding_list(&$list, $title, $more = NULL, $tell_openlist = TRUE, $fields = array()) {
-  // Open a transaction, so we can rollback if ting_openlist
-  // TODO Why is a transaction necessary here? Nothing is sent to the DB before
-  // contacting openlist.
-  $transaction = db_transaction();
-
   if ($list->title === $title && ($more === NULL || $list->more === $more) && empty($fields)) {
     return $list;
   }
@@ -327,7 +319,7 @@ function ding_list_edit_ding_list(&$list, $title, $more = NULL, $tell_openlist =
   ding_list_handle_fields_in_list($list, $fields);
 
   if (module_exists('ting_openlist') && $tell_openlist === TRUE && $list->openlist_id > 0) {
-    // Why do we unset this field before calling the provider?
+    // Remove site specific values before sending to list.
     unset($fields['field_ding_list_permissions']);
     try {
       ding_provider_invoke('openlist', 'request', 'editList', array(
@@ -340,9 +332,6 @@ function ding_list_edit_ding_list(&$list, $title, $more = NULL, $tell_openlist =
         ));
     }
     catch (Exception $e) {
-      $transaction->rollback();
-      // TODO If this is an API function then it should be up to the caller to
-      // determine how an error an error should be reported.
       drupal_set_message(t("An error occurred while changing your list. Please contact the administrator if this problem persists."), 'error');
       return FALSE;
     }
@@ -362,22 +351,18 @@ function ding_list_edit_ding_list(&$list, $title, $more = NULL, $tell_openlist =
  * @param array $element_ids
  *   Array of ding_list_element ids to remove and detach.
  * @param bool $save_list
- *   Automatically save the list after element has been detached..
- *   /// TODO Why would we not want to do so?
+ *   Automatically save the list after element has been detached.
+ *   It's usefu to not save the list every time an element is detached, if more
+ *   elements are detached right after.
  * @param bool $tell_openlist
  *   Tell Openlist about the changes.
- *   // TODO Why would we not want to do so?
+ *   Don't tell openlist about the objects added from openlist while syncing.
  *
  * @return mixed
  *   The count of element items actually deleted. Or FALSE if something went
  *   wrong.
  */
 function ding_list_detach_ding_list_element(&$list, $element_ids = array(), $save_list = TRUE, $tell_openlist = TRUE) {
-  // Open a transaction, so we can rollback if ting_openlist
-  // TODO Why is a transaction necessary here? Nothing is sent to the DB before
-  // contacting openlist.
-  $transaction = db_transaction();
-
   if (empty($element_ids)) {
     return 0;
   }
@@ -400,29 +385,19 @@ function ding_list_detach_ding_list_element(&$list, $element_ids = array(), $sav
   }
 
   if (module_exists('ting_openlist') && $tell_openlist === TRUE) {
-    // TODO Could we use entity field query here?
     $query = db_select('eck_ding_type', 'e');
-
     $result = $query->fields('e', array('openlist_id'))
       ->condition('id', $element_ids)
       ->execute();
 
-
-    // TODO Could we use fetchCol instead?
-    $openlist_ids = array();
-    foreach ($result as $row) {
-      $openlist_ids[] = $row->openlist_id;
-    }
+    $openlist_ids = $result->fetchCol();
 
     if (!empty($openlist_ids)) {
       try {
         ding_provider_invoke('openlist', 'request', 'deleteElement', array($openlist_ids));
       }
       catch (Exception $e) {
-        // TODO If this is an API function then it should be up to the caller to
-        // determine how an error an error should be reported.
         drupal_set_message(t("An error occurred while deleting your element. Please contact the administrator if this problem persists."), 'error');
-        $transaction->rollback();
         return FALSE;
       }
     }
@@ -448,9 +423,6 @@ function ding_list_detach_ding_list_element(&$list, $element_ids = array(), $sav
  *   The ding_list to delete.
  *   If this is a numeric value, it will automatically load the ding_list
  *   object.
- *   (note that after the function has been run your number will be recasted
- *   as an Entity object).
- *   // TODO How can this be? Primitives are not passed by reference.
  * @param bool $tell_openlist
  *   Tell Openlist about the changes.
  *
@@ -605,11 +577,6 @@ function ding_list_get_list($list, $account = NULL) {
  *   The ding_list_element
  */
 function ding_list_edit_ding_list_element(&$element, $type = NULL, $values = NULL, $tell_openlist = TRUE, $no_save = FALSE) {
-  // Open a transaction, so we can rollback if ting_openlist
-  // TODO Why is a transaction necessary here? Nothing is sent to the DB before
-  // contacting openlist.
-  $transaction = db_transaction();
-
   if ($type !== NULL) {
     $element->field_element_type[LANGUAGE_NONE][] = array('value' => $type);
   }
@@ -624,7 +591,6 @@ function ding_list_edit_ding_list_element(&$element, $type = NULL, $values = NUL
       ding_provider_invoke('openlist', 'request', 'editElement', array($element->openlist_id, $openlist_data));
     }
     catch (Exception $e) {
-      $transaction->rollback();
       drupal_set_message(t("An error occurred while editing your element. Please contact the administrator if this problem persists."), 'error');
       return FALSE;
     }

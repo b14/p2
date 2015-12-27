@@ -9,8 +9,6 @@ $plugin = array(
   'title' => t('Ding interests: Term Ting Objects'),
   'description' => '',
   'single' => TRUE,
-  // TODO Please remove dead code
-  // 'content_types' => array('list'),
   'content_types' => array('taxonomy_term'),
   'required context' => new ctools_context_required(t('Term'), 'taxonomy_term'),
   'category' => t('Ding!'),
@@ -25,11 +23,7 @@ function ding_interests_term_ting_objects_content_type_render($subtype, $conf, $
 
   $block = new stdClass();
 
-  // TODO Please remove dead code
-  // $query = 'facet.type="' . $term->name . '"';
-  // $query = "facet.subject=\"$term->name\"";
-
-  // TODO This code is duplicated throughout the codebase. Please refactor.
+  // TODO This code is duplicated throughout the codebase. Please refactor. @MSD
   $search_string = ding_base_get_value('taxonomy_term', $term, 'field_search_string');
   if ($search_string === FALSE) {
     $search_string = 'facet.subject=' . $term->name . '';
@@ -70,7 +64,6 @@ function ding_interests_term_ting_objects_content_type_render($subtype, $conf, $
     $search_string = 'facet.subject=' . $term->name . '';
   }
 
-  // TODO This creates a dependency to ting_carousel which is not declared.
   $block->content = theme('ting_carousel', array(
       'objects' => $buffer,
       'extra' => l(t('More'), 'search/ting/' . $search_string),

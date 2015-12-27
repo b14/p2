@@ -12,3 +12,5 @@ dependencies[] = ding_provider
 dependencies[] = ding_user
 dependencies[] = eck
 dependencies[] = simplevar
+dependencies[] = ding_message
+dependencies[] = ding_list_installer

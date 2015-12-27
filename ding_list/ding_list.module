@@ -25,6 +25,10 @@ define('DING_LIST_TYPE_REMEMBER', 'remember');
 define('DING_LIST_TYPE_LISTS', 'lists_list');
 define('DING_LIST_TYPE_FOLLOW_USER', 'follow_user');
 define('DING_LIST_TYPE_FOLLOW_AUTHOR', 'follow_author');
+
+define('DING_LIST_TYPE_SPECIAL_DEPTS', 'special_depts');
+define('DING_LIST_TYPE_SPECIAL_RESERVATIONS', 'special_reservations');
+define('DING_LIST_TYPE_SPECIAL_LOANS', 'special_loans');
 // Extend here with care.
 
 define('DING_LIST_OPERATION_DELETE', 'delete');
@@ -36,6 +40,13 @@ define('DING_LIST_OPERATION_FOLLOW', 'follow');
 define('DING_LIST_OPERATION_AUTO_CREATE', 'auto_create');
 define('DING_LIST_OPERATION_CHECK_EXISTS', 'check_exists');
 // Extend here with care.
+
+/** View list permission. */
+define('DING_LIST_PERMISSION_VIEW', 'view');
+/** Edit list permission. */
+define('DING_LIST_PERMISSION_EDIT', 'edit');
+/** Is owner list permission. */
+define('DING_LIST_PERMISSION_OWNER', 'owner');
 
 // Include seperate hook files.
 require_once __DIR__ . '/include/form.inc';
@@ -134,28 +145,6 @@ function ding_list_menu() {
     'type' => MENU_CALLBACK,
   );
 
-  $items['dinglist/attach/%/%/%'] = array_merge($edit_list_base, array(
-    'title' => 'Attach elements callback',
-    'page callback' => 'ding_list_attach_element_callback',
-    'page arguments' => array(2, 3, 4),
-    'access arguments' => array(3),
-  ));
-
-  // Detach an element from a list.
-  // Only the list id and actual element->id is needed.
-  $items['dinglist/detach/%/%'] = array_merge($edit_list_base, array(
-    'title' => 'Detach elements callback',
-    'page callback' => 'ding_list_remove_element_from_list',
-    'page arguments' => array(2, 3),
-  ));
-
-  // Delete a list.
-  $items['dinglist/delete/%'] = array_merge($edit_list_base, array(
-    'title' => 'Delete a list callback',
-    'page callback' => 'ding_list_delete_list_callback',
-    'page arguments' => array(2),
-  ));
-
   // Set the order of a list.
   // It gets the ordered array as a POST through ajax.
   $items['dinglist/set_order/%'] = array_merge($edit_list_base, array(
@@ -176,6 +165,26 @@ function ding_list_menu() {
     'page callback' => 'ding_list_create_redirect',
     'access callback' => TRUE,
   );
+  
+    
+  $items['dinglist/attach/%/%/%'] = array_merge($edit_list_base, array(
+    'title' => 'Attach elements callback',
+    'page callback' => 'ding_list_attach_element_callback',
+    'page arguments' => array(2, 3, 4),
+    'access arguments' => array(3),
+  ));
+
+  $items['dinglist/detach/%/%'] = array_merge($edit_list_base, array(
+    'title' => 'Detach elements callback',
+    'page callback' => 'ding_list_remove_element_from_list_callback',
+    'page arguments' => array(2, 3),
+  ));
+
+  $items['dinglist/delete/%'] = array_merge($edit_list_base, array(
+    'title' => 'Delete a list callback',
+    'page callback' => 'ding_list_delete_list_callback',
+    'page arguments' => array(2),
+  ));
 
   return $items;
 }
@@ -242,8 +251,6 @@ function ding_list_user_has_list_edit_access($list_id) {
  *   The mapped array.
  */
 function ding_list_list_operations() {
-  // TODO: Please add a ding_list.api.inc file documenting the
-  // ding_list_operations hook. The expected return value seems quite complex.
   $modules = module_implements('ding_list_operations');
 
   $operations = array();
@@ -393,19 +400,18 @@ function ding_list_user_login(&$edit, $account) {
  * Import from bookmarks.
  */
 function ding_list_import_bookmarks($account) {
-  // TODO Why was this implemented using simplevar?
-  // - This module chooses to add a database field to the users table to
-  // add information. Why is this approach not sufficient here? Or why was
-  /// lazyvars not chosen for that information?
-  // - There is already a 3rd party module for managing lazy variables:
-  // https://www.drupal.org/project/lazy_vars. I agree that is is not very
-  // popular but neither is simple var.
+  if (!module_exists('ding_bookmark')) {
+    return;
+  }
+  
+  // Using simplevar module here, because compatibility with lazy_vars is broken,
+  // ill be fixed later.
   if (simplevar_get('ding_list_import_bookmarks', $account->uid, FALSE) === TRUE) {
     return;
   }
-
-  // TODO This creates a undeclared dependency to ding_bookmark module.
-  // In general should this migration be moved to an install hook?
+  
+  // Because we need the user credentials, the conversion is lazy, and not
+  // performed on install.
   $bookmarks = ding_bookmark_load_bookmarks($account);    
   if (empty($bookmarks)) {
     simplevar_set('ding_list_import_bookmarks', $account->uid, TRUE);
@@ -425,9 +431,7 @@ function ding_list_import_bookmarks($account) {
     }
   }
   catch (Exception $e) {
-    // TODO Can we do better here? More specific exception class, watchdog
-    // logging etc.
-    // NOP
+    watchdog_exception('ding_list', $e);
   }
 }
 
@@ -520,7 +524,6 @@ function ding_list_theme($existing, $type, $theme, $path) {
       'variables' => array(
         'items' => array(),
         'sortable' => FALSE,
-        'toggler' => TRUE,
       ),
     ),
     'ding_list_shared_permissions_table' => array(
@@ -535,6 +538,10 @@ function ding_list_theme($existing, $type, $theme, $path) {
       'variables' => array('message' => ''),
     ),
     'ding_list_followers' => array(
+      'file' => 'theme/theme.inc',
+      'variables' => array('list' => NULL),
+    ),
+    'ding_list_info' => array(
       'file' => 'theme/theme.inc',
       'variables' => array('list' => NULL),
     ),
@@ -584,25 +591,30 @@ function ding_list_secure_permissions($role) {
  * Implements template_preprocess_entity().
  */
 function ding_list_preprocess_entity(&$variables) {
+  global $user;
+  
   if ($variables['entity_type'] == 'ding_type') {
     switch ($variables['ding_type']->type) {
       case 'ding_list':
-        // TODO: Please use global $user as the start of the function
-        if ($variables['ding_type']->uid != $GLOBALS['user']->uid) {
-          // TODO Why is this necessary? As far as I can tell we already
-          // have a separate title callback ding_list__list_title_callback.
+        // Add author to titles of lists, the user don't own.
+        if ($variables['ding_type']->uid != $user->uid) {
           $username = ding_list_list_username($variables['ding_type']);
           if ($username) {
-            // TODO: If we stick to this approach then I would prefer the string
-            // t('@list_title, By @list_author') for better translatability
-            // and to avoid collision with other strings.
-            $variables['title'] .= ', ' . t('By @author', array('@author' => $username));
+            $variables['title'] = t('@list_title, By @list_author', array(
+              '@list_title' => $variables['title'],
+              '@list_author' => $username,
+            ));
           }
         }
         $objects = ding_base_get_items('ding_type', $variables['ding_type'], 'field_list_objects');
         $count = count($objects);
-        // TOD This could probably be put into the translation engine as well.
-        $variables['title'] .= ' (' . $count . ')';
+        $variables['title'] = format_plural(
+          $count,
+          '@list_title (1)',
+          '@list_title (@count)',
+          array('@list_title' => $variables['title'])
+        );
+        
 
         switch ($variables['view_mode']) {
           case 'carousel':
@@ -626,8 +638,7 @@ function ding_list_preprocess_entity(&$variables) {
                 $items[] = ting_object_view($object, 'compact');
               }
 
-              // TODO test?
-              $variables['content']['test'] = array(
+              $variables['content']['carousel'] = array(
                 '#theme' => 'ting_carousel',
                 '#objects' => $items,
               );
@@ -727,20 +738,12 @@ function ding_list_preprocess_entity(&$variables) {
             }
             break;
 
-          // Display a teaser of the
-          // TODO Comment missing a word or two?
+          // Display a teaser of the taxonomy term referred to.
           case 'taxonomy_term':
             $variables['page'] = TRUE;
-            $tid = ding_list_get_list_element_value($element);
-
-            if (is_numeric($tid)) {
-              $term = taxonomy_term_load($tid);
-            }
-            else {
-              // TODO When would the tid not be a numeric value?
-              $title = ding_base_get_value('ding_type', $element, 'field_search_title');
-              $term = ding_list_get_taxonomy_term($title);
-            }
+            
+            $title = ding_base_get_value('ding_type', $element, 'field_search_title');
+            $term = ding_list_get_taxonomy_term($title);
 
             $variables['content']['item'] = taxonomy_term_view($term, 'teaser');
             break;
@@ -807,12 +810,11 @@ The link is active for 7 days from today, after which it will be disabled for se
  * a search.
  */
 function ding_list_ding_user_complete() {
+  $user_lists = ding_list_get_list(DING_LIST_TYPE_USER_LIST);
   $set['ding_list_created_list'] = array(
     'title' => t('Create your own lists'),
     'points' => 1,
-    // TODO Why is this hardcoded to false? I would think we could check whether
-    // the user has created any lists.
-    'completed' => FALSE,
+    'completed' => !empty($user_lists),
     'markup' =>
     t("Did you know you can create your own lists and add objects to them?") . "<br/>" .
     l(t('> Create my own list'), 'list/create', array(
@@ -826,8 +828,7 @@ function ding_list_ding_user_complete() {
     $set['ding_list_following_author'] = array(
       'title' => t('Follow an author'),
       'points' => 1,
-      // TODO FALSE && boolean can never become anything other than FALSE.
-      'completed' => FALSE && !empty($follow_author_elements),
+      'completed' => !empty($follow_author_elements),
       'markup' => t('Try following an author'),
     );
   }
@@ -838,8 +839,7 @@ function ding_list_ding_user_complete() {
     $set['ding_list_following_search'] = array(
       'title' => t('Search subscriptions'),
       'points' => 1,
-      // TODO FALSE && boolean can never become anything other than FALSE.
-      'completed' => FALSE && !empty($follow_search_elements),
+      'completed' => !empty($follow_search_elements),
       'markup' =>
       t('Subscribe for a search result and recieve notifications when new content arrives') .
       "<br/><p>" .
@@ -860,32 +860,23 @@ function ding_list_ding_user_complete() {
 function ding_list_preprocess_views_view_table(&$vars) {
   $view = $vars['view'];
   if ($view->name == 'ding_list_elements') {
-    // Change titles of interrests pane.
-    if ($view->current_display == 'panel_pane_2') {
-      // TODO Why is switching on these hardcoded titles necessary? If we can
-      // switch between yes and no we should be able to switch on 'Interests'
-      // and 'Topics I have no interrest in.' in the first place.
-      switch ($vars['title']) {
-        case 'yes':
-          $vars['title'] = t('Interests');
-          break;
-
-        case 'no':
-          $vars['title'] = t('Topics I have no interrest in.');
-          break;
-      }
-    }
-
     global $user;
     $account = $user;
     
     // Set the title depending on the list type.
     $list = ding_list_get_list($view->args[0]);
     $operations = ding_list_list_operations();
-    if (isset($operations[ding_base_get_value('ding_type', $list, 'field_list_type')]['_data']['default_title'])) {
-      $vars['title'] = $operations[ding_base_get_value('ding_type', $list, 'field_list_type')]['_data']['default_title'];
+    if (isset($operations[ding_base_get_value('ding_type', $list, 'field_list_type')]['_data'])) {
+      $data = $operations[ding_base_get_value('ding_type', $list, 'field_list_type')]['_data'];
+      
+      if (isset($data[$vars['title']])) {
+        $vars['title'] = $data[$vars['title']];
+      }
+      elseif (!empty($data['default_title'])) {
+        $vars['title'] = $data['default_title'];
+      }
     }
-
+    
     $dragging = ding_list_allowed($list, DING_LIST_OPERATION_SORT) && ding_list_user_has_access($list, 'edit', $account);
     // Enable dragging
     if ($dragging) {
@@ -898,15 +889,13 @@ function ding_list_preprocess_views_view_table(&$vars) {
         $vars['row_attributes'][]['data-item-id'] = $item->id;
       }
 
-      // TODO Why do we add some CSS and JS here but also in
-      // ding_list_views_post_execute()?
+      $path = drupal_get_path('module', 'ding_list');
       drupal_add_tabledrag($table_id, 'order', 'sibling', 'views-field-delta');
-      drupal_add_js(drupal_get_path('module', 'ding_list') . '/js/ding_list_tabledrag.js');
-      drupal_add_css(drupal_get_path('module', 'ding_list') . '/css/ding-list-tabledrag.css');
+      drupal_add_js($path . '/js/ding_list_tabledrag.js');
+      drupal_add_css($path . '/css/ding-list-tabledrag.css');
+      drupal_add_css($path . '/css/ding-list-view.css');
     }
     // Hide dragging fields if dragging is not enabled.
-    // TODO Why were these fields added in the first place if we at that point
-    // did not know if dragging was enabled?
     else {
       if (isset($vars['field_classes']['id'])) {
         foreach ($vars['field_classes']['id'] as &$classes) {
@@ -920,15 +909,6 @@ function ding_list_preprocess_views_view_table(&$vars) {
         }
       }
     }
-  }
-}
-
-/**
- * Include css in ding_list views.
- */
-function ding_list_views_post_execute(&$view) {
-  if ($view->name == 'ding_list_elements') {
-    drupal_add_css(drupal_get_path('module', 'ding_list') . '/css/ding-list-view.css');
   }
 }
 
@@ -962,9 +942,6 @@ function ding_list_html_head_alter(&$head_elements) {
  * Implements hook_entity_load().
  *
  * When a list is loaded convert the cql of ting_objects to the new cql.
- *
- * TODO: This code runs every time an entity is loaded. That seems unnecessary.
- * Could this be moved to an install hook instead?
  */
 function ding_list_entity_load($entities, $type) {
   $saved = &drupal_static(__FUNCTION__, array());
@@ -997,15 +974,14 @@ function ding_list_entity_load($entities, $type) {
  * We need to convert old cql to new cql. Old cql will occur if ding_list has
  * been used on an environment using the old cql before upgrading.
  *
- * TODO It would be nice with an example of what a string might look like
- * before and after conversion to understand what is going on.
- * Regexs are not that readable.
+ * This function is needed, because the cql converter included in ding core is
+ * incomplete.
  */
 function ding_list_convert_cql($string) {
   $pattern = '/(\s+?|^)(\(?dc|\(?phrase)\.(.+?)\s?="?(.+?)"?(\s+|$)(AND|OR|NOT|$)/';
   $string = preg_replace_callback($pattern, 'ding_list_convert_cql_replace_callback', $string);
 
-  $string = preg_replace('/\d{6}:(\d+)/', '870970-basis:$1', $string);
+  $string = preg_replace('/\d{6}:I?(\d+)/', '870970-basis:$1', $string);
 
   return $string;
 }

@@ -9,7 +9,7 @@
  * The idea is that the system contains alot of things we would like the user to
  * try out or to do, but we want it to be suggested in a not overwhelming way
  *
- * Exampel 1: (Full interaction)
+ * Example 1: (Full interaction)
  * The user logs in
  * DI shuffles all DI plugins and selects the "ding_entity_rating_loan_history"
  * The user is presented with a selection of previous loans and is encouraged
@@ -38,7 +38,7 @@ function ding_interaction_menu() {
     'description' => 'Get an overview of the interaction elements',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('ding_interaction_admin_overview'),
-    'access arguments' => array('administer ding interaction'),
+    'access arguments' => array('administer personalisation'),
     'file' => 'ding_interaction.admin.inc',
   );
   $items['admin/config/ding/interaction/key_overview/%'] = array(
@@ -47,50 +47,10 @@ function ding_interaction_menu() {
     'type' => MENU_CALLBACK,
     'page callback' => 'drupal_get_form',
     'page arguments' => array(5),
-    'access arguments' => array('administer ding interaction'),
+    'access arguments' => array('administer personalisation'),
   );
-  $items['ding_interaction/%ctools_js/hide'] = array(
-    'title' => 'Hide pane',
-    'page callback' => 'ding_interaction_hide',
-    'page arguments' => array(1),
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-  );
-
+ 
   return $items;
-}
-
-/**
- * Implements hook_permission().
- */
-function ding_interaction_permission() {
-  return array(
-    'administer ding interaction' => array(
-      'title' => t('Administer ding interaction'),
-    ),
-  );
-}
-
-/**
- * Ajax callback.
- *
- * TODO If this function does nothing except hide a pane could it then be
- * handled clientside only? There does not seem to be a reason to involve the
- * server.
- */
-function ding_interaction_hide($js = NULL) {
-  if ($js) {
-    ctools_include('ajax');
-    $commands = array();
-    // TODO: $ouput is undefied. Is something missing?
-    $commands[] = ajax_command_remove('.pane-interaction-pane', $output);
-    // TODO Please use ajax_deliver().
-    print ajax_render($commands);
-    exit;
-  }
-  else {
-    return '';
-  }
 }
 
 /**
@@ -116,15 +76,41 @@ function ding_interaction_available_content($ignore_settings = FALSE) {
 }
 
 /**
- * Get ding interaction content.
+ * Implements hook_theme.
+ */
+function ding_interaction_theme($existing, $type, $theme, $path) {
+  return array(
+    'ding_interaction_pane_content' => array(
+      'variables' => array('title' => NULL, 'data' => NULL, 'close_btn' => NULL, 'help_text' => NULL),
+    ),
+  );
+}
+
+/**
+ * Theme function for ding_interaction_pane_content.
+ */
+function theme_ding_interaction_pane_content($variables) {
+  $output = '<h2>' . $variables['title'] . '</h2><div class="ding-interaction-pane">' . $variables['data'] . $variables['close_btn'] . $variables['help_text'] . '</div>';
+  return $output;
+}
+
+/**
+ * Fetch ding interaction pane content.
  *
- * TODO Please document the function parameters.
+ * @param array $module_list
+ *   Array of modules that provide content for ding_interaction.
+ *
+ * @param int $count
+ *   The amount of page views between each interaction. 
+ *
+ * @return array
+ *   A render array for output.
  */
 function ding_interaction_content($module_list = NULL, $count = DING_INTERACTION_DEFAULT_COUNT) {
-  // TODO: Please add some comments about what the purpose of this
-  // manipulation of user and edit is.
   global $user;
   $data = NULL;
+
+  // Prepare edit array for user_save.
   $edit = array();
   if (isset($user->data)) {
     $edit['data'] = $user->data;
@@ -138,7 +124,7 @@ function ding_interaction_content($module_list = NULL, $count = DING_INTERACTION
   }
   $output = array();
 
-  // @todo: The count should be done per login and not per page view.
+  // Show interaction pane on n'th page view.
   if (empty($edit['data']['ding_interaction']['count']) || $edit['data']['ding_interaction']['count'] == 0) {
     if (!$module_list) {
       $module_list = ding_interaction_available_content();
@@ -157,10 +143,12 @@ function ding_interaction_content($module_list = NULL, $count = DING_INTERACTION
       }
       else {
         $output['data'] = $data['data'];
-        $output['title'] = $data['title'];
+        $output['title'] = isset($data['title']) ? $data['title'] : '';
       }
     }
   }
+  
+  // Update the user page count.
   if (user_is_logged_in()) {
     $edit['data']['ding_interaction']['count'] += 1;
     if ($edit['data']['ding_interaction']['count'] >= variable_get('ding_interaction_page_count', 5)) {

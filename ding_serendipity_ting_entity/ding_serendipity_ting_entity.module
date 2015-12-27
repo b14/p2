@@ -39,16 +39,21 @@ function ding_serendipity_ting_entity_serendipity_info() {
       'description' => 'Search for Ting objects with same type',
       'keys' => array('ting_object_id'),
     ),
-    'ting_object_publisher' => array(
-      'title' => 'Ting Objects related by same publisher',
-      'description' => 'Search for Ting objects with same publisher',
-      'keys' => array('ting_object_id'),
-    ),
     'ting_object_adhl' => array(
       'title' => 'Ting objects via ADHL service on current object',
       'description' => 'Call ADHL service on the current object',
       'keys' => array('ting_object_id'),
       'settings' => 'ding_serendipity_ting_entity_adhl_settings',
+    ),
+    'ting_object_adhr' => array(
+      'title' => 'Ting objects via openlist ADHR service.',
+      'description' => 'Call Openlist ADHR service on the current object',
+      'keys' => array('ting_object_id'),
+    ),
+    'ting_object_openlist_adhl' => array(
+      'title' => 'Ting objects via openlist ADHL service.',
+      'description' => 'Call Openlist ADHL service on the current object',
+      'keys' => array('ting_object_id'),
     ),
   );
 
@@ -103,7 +108,8 @@ function ding_serendipity_ting_entity_ting_object_author_serendipity_add($contex
   $query = implode(' AND ', $creators);
 
   // TODO: This function is not defined?
-  $results = ding_base_do_search($query, array());
+  // $results = ding_base_do_search($query, array());
+  $results = array();
   foreach($results as &$item) {
     $item['info'] = array(
       'description' =>  t('This material has been selected based on the authors of the material you are viewing.'),
@@ -162,7 +168,10 @@ function ding_serendipity_ting_entity_ting_object_type_serendipity_add($context)
 
   // Get the type if such entry exists.
   $type = $obj->getType();
-  // TODO Please add a comment why we bail if the type is bog.
+
+  // @Todo extend with types where this plugin clearly is useless.
+  // We would like to present other PS3 games for a PS3 game for instance.
+  // But not just books for a book.
   if (empty($type) || $type == 'bog') {
     return $results;
   }
@@ -176,36 +185,6 @@ function ding_serendipity_ting_entity_ting_object_type_serendipity_add($context)
         'description' => t('This material has been selected based on the type of the material you are viewing.'),
       );
     }
-  }
-  
-  return $results;
-}
-
-/**
- * Implements hook_PLUGIN_NAME_serendipity_add().
- */
-function ding_serendipity_ting_entity_ting_object_publisher_serendipity_add($context) {
-  $results = array();
-  // Ensure that the active page is a ting_object
-  if (!isset($context['ting_object_id'])) {
-    return $results;
-  }
-
-  $obj = ding_entity_load($context['ting_object_id'], 'ting_object');
-
-  // Get the publisher if such entry exists.
-  $publisher = $obj->getPublisher();
-  if (!$publisher) {
-    return $results;
-  }
-
-  $query = 'dc.publisher="' . $publisher . '"';
-  $query = ding_list_convert_cql($query);
-  $results = ding_serendipity_do_search($query, array());
-  foreach ($results as & $item) {
-    $item['info'] = array(
-      'description' => t('This material has been selected based on the publisher of the material you are viewing.'),
-    );
   }
   
   return $results;
@@ -230,6 +209,7 @@ function ding_serendipity_ting_entity_ting_object_adhl_serendipity_add($context)
     $record = $obj->getRecord();
 
     // Lookup in ADHL service.
+
     // TODO Use ting_get_object_recommendations() instead.
     $request = ting_get_request_factory()->getObjectRecommendationRequest();
     // TODO We have a getIsbn function for retrieving this value.
@@ -264,20 +244,75 @@ function ding_serendipity_ting_entity_ting_object_adhl_serendipity_add($context)
 }
 
 /**
- * Implements hook_ding_serendipity_results_alter().
+ * Implements hook_PLUGIN_NAME_serendipity_add().
  */
-function ding_serendipity_ting_entity_ding_serendipity_results_alter(&$results) {
-  // TODO This seems crucial throughout the site. Is there any reason why this
-  // is not part of the ding_serendipity core module?
-  $context = $results['context'];
-  if (isset($context['ting_object_id'])) {
-    $id = $context['ting_object_id'];
+function ding_serendipity_ting_entity_ting_object_adhr_serendipity_add($context) {
+  $results = array();
 
-    // Remove current item if it is in the result list.
-    foreach ($results['items'] as $key => $item) {
-      if ($item['id'] == $id) {
-        unset($results['items'][$key]);
-      }
-    }
+  // Ensure that the active page is a ting_object.
+  if (!isset($context['ting_object_id'])) {
+    return $results;
   }
+
+  $obj = ding_entity_load($context['ting_object_id'], 'ting_object');
+  
+  try {
+    $results = ding_provider_invoke('openlist', 'request', 'callModule', array(
+      'TingObjectRating',
+      'getSuggestion',
+      array($obj->ding_entity_id, ting_openlist_user_identifier()),
+    ));
+  }
+  catch (Exception $e) {
+    // NOP
+  }
+  
+  foreach ($results as &$item) {
+    $item = array(
+      'type' => 'ting_object',
+      'id' => $item['object_id'],
+      'info' => array(
+        'description' => t('Because other people who also liked !title liked this.', array('!title' => $obj->title)),
+      ),
+    );
+  }
+
+  return $results;
+}
+
+/**
+ * Implements hook_PLUGIN_NAME_serendipity_add().
+ */
+function ding_serendipity_ting_entity_ting_object_openlist_adhl_serendipity_add($context) {
+  $results = array();
+
+  // Ensure that the active page is a ting_object.
+  if (!isset($context['ting_object_id'])) {
+    return $results;
+  }
+
+  $obj = ding_entity_load($context['ting_object_id'], 'ting_object');
+  
+  try {
+    $results = ding_provider_invoke('openlist', 'request', 'callModule', array(
+      'LoanHistory',
+      'getSuggestion',
+      array($obj->ding_entity_id, ting_openlist_user_identifier()),
+    ));
+  }
+  catch (Exception $e) {
+    // NOP
+  }
+  
+  foreach ($results as &$item) {
+    $item = array(
+      'type' => 'ting_object',
+      'id' => $item['object_id'],
+      'info' => array(
+        'description' => t('Because others also borrowed !item', array('!item' => $obj->title)),
+      ),
+    );
+  }
+
+  return $results;
 }

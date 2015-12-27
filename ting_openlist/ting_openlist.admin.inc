@@ -34,9 +34,7 @@ function ting_openlist_settings_form($form, &$form_state) {
   $form['settings']['ting_openlist_prefix'] = array(
     '#type' => 'textfield',
     '#title' => t('Openlist prefix'),
-    // TODO Please add a description here. Without any formal documentation
-    // its it the best we can get.
-    '#description' => '',
+    '#description' => t('The prefix used for creating a unique hashed user id.'),
     '#default_value' => variable_get('ting_openlist_prefix', uniqid()),
     '#required' => TRUE,
   );
@@ -54,13 +52,6 @@ function ting_openlist_settings_form($form, &$form_state) {
     '#description' => '',
     '#default_value' => variable_get('ting_openlist_wsdl_cache', FALSE),
   );
-  
-  $form['caching']['ting_openlist_wsdl_cache_ttl'] = array(
-    '#type' => 'textfield',
-    '#title' => t('WSDL time to live'),
-    '#description' => t("How long should the WSDL be cached in seconds."),
-    '#default_value' => variable_get('ting_openlist_wsdl_cache_ttl', ''),
-  );
 
   // Debugging settings.
   $form['debugging'] = array(
@@ -76,8 +67,7 @@ function ting_openlist_settings_form($form, &$form_state) {
     '#default_value' => variable_get('ting_openlist_log', FALSE),
   );
 
-  // TODO Why is there a need for two levels of debugging? Other similar modules
-  // in this project only have one.
+  // The detailed log will log the full argument list send to openlist.
   $form['debugging']['ting_openlist_log_details'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable detailed logging'),

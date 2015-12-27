@@ -1,14 +1,9 @@
 <?php
 
 /**
- * TODO This file needs updating.
- * - The top docblock refers to serendipity
- * - hook_ding_interaction_info supports more return values shown by e.g. ding_entity_rating_loan_history_ding_interaction_info
- * - hook_ding_interaction_view supports more return values shown by e.g. ding_user_complete_ding_interaction_view().
- *
  * @file
  * This file contains the api functions which developers can use to
- * influence the serendipity results.
+ * influence the interaction panes.
  */
 
 /**

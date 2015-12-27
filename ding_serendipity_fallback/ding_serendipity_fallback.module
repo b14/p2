@@ -4,16 +4,10 @@
  * @file
  * Ding serendipity content
  *
- * This module provides a set of serendipity functions which deliver serendipity
- * content based on the available fields and entities in the ding2 profile.
+ * This module collects serendipity based on very general criteria
+ * Set this module to lowest weight in order to work as a fallback plugin
+ * 
 
- * TODO The DocBlock here does not seem to match the functionality of the
- * function. Please update it.
- *
- * TODO Based on the name I has expected that this module implemented
- * the serendipity_fallback hook (see ding_serendipity_append_fallback()) but
- * that is not the case. No module seems to implement this hook. Is it
- * intentional?
  */
 
 /**
@@ -30,19 +24,8 @@ function ding_serendipity_fallback_serendipity_info() {
 }
 
 /**
+ * Implements hook_PLUGIN_NAME_serendipity_add().
  * Ding Serendipity function for nodes related content.
- *
- * The content returned by this function consists of nodes from the site.
- * TODO The DocBlock here does not seem to match the functionality of the
- * function. Please update it.
- *
- * @context array
- *   Serendipity context array
- *
- * @return array
- *   Array of results, each result should contain a type and an id key.
- *   - Type is the entity Type.
- *   - id the entity id.
  */
 function ding_serendipity_fallback_ting_object_serendipity_add($context) {
   $results = array();
@@ -52,9 +35,6 @@ function ding_serendipity_fallback_ting_object_serendipity_add($context) {
     return array();
   }
 
-  // TODO Since this is the only module where the variable
-  // ding_serendipity_search_string_final is used is should also be the module
-  // responsible for the administration interface for it - not ding_serendipity.
   $query = variable_get('ding_serendipity_search_string_final');
 
   if (!empty($query)) {
@@ -62,14 +42,11 @@ function ding_serendipity_fallback_ting_object_serendipity_add($context) {
       $results = ding_serendipity_do_search($query);
     }
     catch (Exception $e) {
-      // TODO The type should be the name of the module.
-      watchdog_exception(__FUNCTION__, $e);
+      // NOP
     }
 
     foreach ($results as & $item) {
-      // TODO This description seems to be related to the the search string.
-      // Should it also be configurable?
-      $item['info']['description'] = t('This is new content.');
+      $item['info']['description'] = variable_get('ding_serendipity_search_string_final_description',t('The library recommends this'));
     }
   }
 

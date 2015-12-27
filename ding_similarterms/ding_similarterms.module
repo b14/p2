@@ -1,6 +1,5 @@
 <?php
-// by Jeff Robbins
-// TODO What is going on here? Is this a copy/pasted module?
+// This module is a modified version of the official drupal module Similar by Terms.
 
 /**
  * @file

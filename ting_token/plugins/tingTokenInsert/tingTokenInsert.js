@@ -103,8 +103,6 @@ Drupal.wysiwyg.plugins['tingTokenInsert'] = {
   detach: function(content, settings, instanceId) {
     var $content = $('<div>' + content + '</div>');
     $.each($('.mainTingInsert', $content), function (i, elem) {
-      // TODO Please remove outcommented code.
-      //elem.parentNode.insertBefore(document.createComment('wysiwyg_example_plugin'), elem);
       elem.parentNode.removeChild(elem);
     });
     return $content.html();

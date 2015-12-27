@@ -33,24 +33,22 @@ function ding_interaction_admin_info($subtype, $conf, $context) {
  * Implements hook_content_type_render().
  */
 function ding_interaction_content_type_render($subtype, $conf, $panel_args, $context) {
-  // Only show on front if activated.
-  // TODO Could this be handled using visibility rules? That would make the
-  // content type more resuable.
+  // Only show on front if serendipity is enabled for the frontpage.
+  // See ding_frontpage config at /admin/config/ding/frontend.
   if(drupal_is_front_page() && !variable_get('ding_frontpage_serendipity') && variable_get('ding_frontpage_promoter') != 'serendipity') {
     return;
   }
 
   // Include the CTools tools that we need.
   ctools_include('ajax');
-  // TODO Could this be added to #attached and a render array returned?
+  // @TODO Change $output to render array and use #attached for files.
   drupal_add_js(drupal_get_path('module', 'ding_interaction') . '/js/ding_interaction.js');
   drupal_add_css(drupal_get_path('module', 'ding_interaction') . '/css/ding_interaction.css');
   $data = ding_interaction_content(NULL, $conf['count']);
   
   $output = new stdClass();
   if ($data) {
-    // See previous comment about closing panes without AJAX.
-    $close_btn = ctools_ajax_text_button(' ' . t('Close'), 'ding_interaction/nojs/hide', t('Close pane'), 'close-btn');
+    $close_btn = l(' ' . t('Close'), '', array('attributes' => array('class' => array('close-btn'))));
 
     $help_text = empty($data['more_title']) ? "" : l(
       $data['more_title'],
@@ -63,7 +61,7 @@ function ding_interaction_content_type_render($subtype, $conf, $panel_args, $con
     );
 
     $output->title = '';
-    $output->content = '<h2>' . $data['title'] . '</h2><div class="ding-interaction-pane">' . $data['data'] . $close_btn . $help_text . '</div>';
+    $output->content = theme('ding_interaction_pane_content', array('title' => $data['title'], 'data' => $data['data'], 'close_btn' => $close_btn, 'help_text' => $help_text));
     $output->css_class = isset($data['css_class']) ? $data['css_class'] : "default-interaction";
   }
   return $output;

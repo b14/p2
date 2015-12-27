@@ -11,6 +11,7 @@ require_once __DIR__ . '/functions.handler.inc';
 if (!function_exists('ding_base_get_value')) {
   // TODO: Judging by the name it is not the intent that these functions belong
   // here. In that case please add a todo stating that they should be moved.
+  // @TODO: Move this to ding_base module.
 
   /**
    * Get the first value of a field item.
@@ -30,6 +31,7 @@ if (!function_exists('ding_base_get_value')) {
 }
 
 if (!function_exists('ding_base_get_items')) {
+  // @TODO: Move this to ding_base module.
 
   /**
    * Get the fields, like field_get_items. But always return an array.
@@ -56,9 +58,17 @@ if (!function_exists('ding_base_get_items')) {
  * @param string $value_title
  *   Title of the element, which can override default titles.
  *
- * TODO Please document the return value.
- * This function seems to do a lot of things. Could it be broken up into
- * multiple smaller functions with a clearer scope?
+ * @return array
+ *   An array of list actions available for the specific item, this will most
+ *   likely be add to list actions.
+ *   Every action is build up of an array that looks like:
+ *    - list_id: The ID of the list.
+ *    - title: Title of the action.
+ *    - value: The given item value.
+ *    - type: The given item type.
+ *    - value_title: The given value_title.
+ *    - custom: The custom is an array that is used in a links theme, as a
+ *      single link.
  */
 function ding_list_get_add_to_list_data($type, $value, $value_title = FALSE) {
   global $user;
@@ -103,14 +113,37 @@ function ding_list_get_add_to_list_data($type, $value, $value_title = FALSE) {
   if ($type === 'ting_object') {
     $ting_object = ting_object_load($value);
 
-    // Add a follow action for each subject.
-    foreach ($ting_object->subjects as $subject) {
-      $lists = ding_list_get_lists(DING_LIST_TYPE_FOLLOW);
+    // Add a follow action for subjects
+    $data = array_merge($data, ding_list_get_add_to_list_ting_object_subjects($ting_object));
 
-      foreach ($lists as $list) {
-        $list_title = t('Follow @author', array('@author' => $subject));
+    // Add a follow action for authors
+    $data = array_merge($data, ding_list_get_add_to_list_ting_object_creators($ting_object));
+  }
 
-        // Add username to shared lists.
+  return $data;
+}
+
+/**
+ * Get follow creator actions for a ting_object.
+ *
+ * @see ding_list_get_add_to_list_data()
+ */
+function ding_list_get_add_to_list_ting_object_creators($ting_object) {
+  global $user;
+  
+  $data = array();
+  
+  $creators = $ting_object->creators;
+  foreach ($creators as & $creator) {
+    $creator = 'phrase.creator="' . $creator . '"';
+  }
+  if (isset($creator)) {
+    $lists = ding_list_get_lists(DING_LIST_TYPE_FOLLOW_AUTHOR);
+
+    foreach ($lists as $list) {
+      if (!ding_list_has_ding_list_element($list, 'follow_author', $creator)) {
+        $pretty_author = implode(', ', $ting_object->creators);
+        $list_title = t('Follow @author', array('@author' => $pretty_author));
         if ($list->uid != $user->uid) {
           $username = ding_list_list_username($list);
           if ($username) {
@@ -119,57 +152,64 @@ function ding_list_get_add_to_list_data($type, $value, $value_title = FALSE) {
         }
 
         $data[] = array(
+          'list_id' => $list->id,
+          'title' => $list_title,
+          'value' => $creator,
+          'type' => 'follow_author',
+          'value_title' => implode(', ', $ting_object->creators),
+        );
+      }
+      else {
+        $list_title = t('Already following @author', array('@author' => implode(', ', $ting_object->creators)));
+        $data[] = array(
           'custom' => array(
             'title' => $list_title,
-            'href' => 'ding/interests/nojs/' . $subject . '/' . $user->uid . '/5',
-            'attributes' => array(
-              'class' => array('use-ajax'),
-            ),
-            'query' => array('frombutton' => NULL),
           ),
         );
       }
     }
+  }
+  
+  return $data;
+}
 
-    // Add a follow action for each author.
-    $creators = $ting_object->creators;
-    foreach ($creators as & $creator) {
-      $creator = 'phrase.creator="' . $creator . '"';
-    }
-    if (isset($creator)) {
-      $lists = ding_list_get_lists(DING_LIST_TYPE_FOLLOW_AUTHOR);
+/**
+ * Get follow subject actions for a ting_object.
+ *
+ * @see ding_list_get_add_to_list_data()
+ */
+function ding_list_get_add_to_list_ting_object_subjects($ting_object) {
+  global $user;
+  
+  $data = array();
+  
+  foreach ($ting_object->subjects as $subject) {
+    $lists = ding_list_get_lists(DING_LIST_TYPE_FOLLOW);
 
-      foreach ($lists as $list) {
-        if (!ding_list_has_ding_list_element($list, 'follow_author', $creator)) {
-          $pretty_author = implode(', ', $ting_object->creators);
-          $list_title = t('Follow @author', array('@author' => $pretty_author));
-          if ($list->uid != $user->uid) {
-            $username = ding_list_list_username($list);
-            if ($username) {
-              $list_title .= '(' . $username . ')';
-            }
-          }
+    foreach ($lists as $list) {
+      $list_title = t('Follow @author', array('@author' => $subject));
 
-          $data[] = array(
-            'list_id' => $list->id,
-            'title' => $list_title,
-            'value' => $creator,
-            'type' => 'follow_author',
-            'value_title' => implode(', ', $ting_object->creators),
-          );
-        }
-        else {
-          $list_title = t('Already following @author', array('@author' => implode(', ', $ting_object->creators)));
-          $data[] = array(
-            'custom' => array(
-              'title' => $list_title,
-            ),
-          );
+      // Add username to shared lists.
+      if ($list->uid != $user->uid) {
+        $username = ding_list_list_username($list);
+        if ($username) {
+          $list_title .= '(' . $username . ')';
         }
       }
+
+      $data[] = array(
+        'custom' => array(
+          'title' => $list_title,
+          'href' => 'ding/interests/nojs/' . $subject . '/' . $user->uid . '/5',
+          'attributes' => array(
+            'class' => array('use-ajax'),
+          ),
+          'query' => array('frombutton' => NULL),
+        ),
+      );
     }
   }
-
+  
   return $data;
 }
 
@@ -812,12 +852,12 @@ function ding_list_remove_permission($element) {
 }
 
 /**
- * Get the arra of permissions connected to the permission.
+ * Get the array of permissions connected to the permission.
  */
 function ding_list_get_permission_permissions($permission = FALSE) {
   $matrix = array(
-    'view' => array('view'),
-    'edit' => array('edit', 'view'),
+    DING_LIST_PERMISSION_VIEW => array(DING_LIST_PERMISSION_VIEW),
+    DING_LIST_PERMISSION_EDIT => array(DING_LIST_PERMISSION_EDIT, DING_LIST_PERMISSION_VIEW),
   );
 
   if ($permission === FALSE || !isset($matrix[$permission])) {
@@ -834,17 +874,17 @@ function ding_list_get_permission_permissions($permission = FALSE) {
  *   List entity.
  * @param string $permission
  *   The permission to check against.
- *   TODO The supported permissions should be documented.
- *   One way to do this could be through constants.
  * @param object $account
  *   The user account.
  *
  * @return bool
  *   TRUE or FALSE depending on the user has access.
  */
-function ding_list_user_has_access($list, $permission = 'view', $account = NULL) {
+function ding_list_user_has_access($list, $permission = DING_LIST_PERMISSION_VIEW, $account = NULL, $token = FALSE) {
   $access = &drupal_static(__FUNCTION__, array());
-  // TODO adding a comment about what is going on here would be nice.
+  
+  // The access key is the key used by the static cache, and it's a unique key
+  // defined by all the arguments given the function.
   $access_key = md5(serialize(func_get_args()));
   if (isset($access[$access_key])) {
     return $access[$access_key];
@@ -867,17 +907,11 @@ function ding_list_user_has_access($list, $permission = 'view', $account = NULL)
       return $access[$access_key];
 
     case 'public':
-      $access[$access_key] = $permission == 'view';
+      $access[$access_key] = $permission == DING_LIST_PERMISSION_VIEW;
       return $access[$access_key];
   }
 
   if (!user_is_logged_in()) {
-    if (isset($_GET['token'])) {
-      // TODO Adding a redirect is a surprising side effect for a function
-      // that should return a boolean. I would prefer if this logic was kept
-      // in the calling functions.
-      drupal_goto('dinglist/login/' . $list->id);
-    }
     $access[$access_key] = FALSE;
     return $access[$access_key];
   }
@@ -889,15 +923,14 @@ function ding_list_user_has_access($list, $permission = 'view', $account = NULL)
   }
 
   // 3) Has Token.
-  if (isset($_GET['token'])) {
-    // TODO Why is token not passed as an argument to the function?
+  if (!empty($token)) {
     if ($account->uid > 0) {
       foreach (ding_list_get_permission_permissions() as $key => $array) {
         // A token only works 7 days, so create a token for each of the
         // previous 7 days and test it against the given token.
         for ($i = 0; $i < 7; $i++) {
-          $token = ding_list_share_token($list, $key, mktime(0, 0, 0, date('n'), date('j') - $i));
-          if ($_GET['token'] == $token) {
+          $share_token = ding_list_share_token($list, $key, mktime(0, 0, 0, date('n'), date('j') - $i));
+          if ($token == $share_token) {
             ding_list_add_permission($list, $key, $account);
 
             $permissions = ding_list_get_permission_permissions($key);

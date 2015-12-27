@@ -9,8 +9,6 @@ $plugin = array(
   'title' => t("User: list"),
   'description' => t('Control access by to user lists.'),
   'callback' => 'ding_list_user_list_ctools_access_check',
-  // TODO: Is default needed here?
-  'default' => 1,
   'settings form' => 'ding_list_user_list_ctools_access_settings',
   'summary' => 'ding_list_user_list_ctools_access_summary',
   'required context' => array(
@@ -27,15 +25,12 @@ $plugin = array(
  */
 function ding_list_user_list_ctools_access_settings($form, &$form_state, $conf) {
   $form['settings']['visibility_settings'] = array(
-    // TODO: Nitpicking but I think radios would be better for usability.
-    '#type' => 'select',
+    '#type' => 'radios',
     '#title' => t('Visibility settings for the list'),
     '#options' => array(
-      // TODO This should use proper definitions of permissions for keys - e.g.
-      // constants.
-      'view' => t('View'),
-      'edit' => t('Edit'),
-      'owner' => t('Owner'),
+      DING_LIST_PERMISSION_VIEW => t('View'),
+      DING_LIST_PERMISSION_EDIT => t('Edit'),
+      DING_LIST_PERMISSION_OWNER => t('Owner'),
     ),
     '#default_value' => $conf['visibility_settings'],
   );
@@ -54,7 +49,13 @@ function ding_list_user_list_ctools_access_check($conf, $context) {
   $account = $context[0]->data;
   $list = $context[1]->data;
 
-  $result = ding_list_user_has_access($list, $conf['visibility_settings'], $account);
+  $token = isset($_GET['token']) ? $_GET['token'] : FALSE;
+  
+  $result = ding_list_user_has_access($list, $conf['visibility_settings'], $account, $token);
+  
+  if ($result === FALSE && !empty($token)) {
+    drupal_goto('dinglist/login/' . $list->id);
+  }
 
   return $result;
 }
@@ -63,6 +64,5 @@ function ding_list_user_list_ctools_access_check($conf, $context) {
  * Provide a summary description based upon the checked roles.
  */
 function ding_list_user_list_ctools_access_summary($conf, $context) {
-  // TODO Please include the list in the summary
   return t('@identifier @setting', array('@identifier' => $context[0]->identifier, '@setting' => $conf['visibility_settings']));
 }

@@ -36,20 +36,19 @@ function ding_serendipity_site_serendipity_info() {
 
 /**
  * Implements hook_PLUGIN_NAME_serendipity_add().
+ * Fetch objects via field_materials
  */
 function ding_serendipity_site_field_related_material_serendipity_add($context) {
   $results = array();
   // Ensure that the context is set.
-  if (!isset($context['node'])) {
+  if (empty($context['node'])) {
     return array();
   }
 
   // Load the node to access relevant fields and resolve endpoints of ting_objects
-  // TODO If we have a loaded node in lines 43 why loaded it again?
-  $node = node_load($context['node_nid']);
+  $node = $context['node'];
 
   // Get relations to ting_objects through ting_reference.
-  // TODO Where is the this field declared? I could not spot it in the codebase.
   if (!empty($node->field_materials)) {
     $relations = ting_reference_get_relations('node', $node);
     if (!empty($relations)) {
@@ -68,10 +67,10 @@ function ding_serendipity_site_field_related_material_serendipity_add($context) 
         $results[] = array(
           'type' => 'ting_object',
           'id' => $obj->ding_entity_id,
-          // TODO Why is weight 50 used?
           'weight' => 50 + $count,
           'info' => array(
-            'description' => t('These items are related to the content you are viewing.'),
+            // Descriptions for nodes are usually not displayed
+            'description' => t('This material is related to this page.'),
           ),
         );
       }
@@ -83,12 +82,12 @@ function ding_serendipity_site_field_related_material_serendipity_add($context) 
 
 /**
  * Implements hook_PLUGIN_NAME_serendipity_add().
+ * Adds nodes via field_related_content
  */
 function ding_serendipity_site_field_related_content_serendipity_add($context) {
   $results = array();
   // Ensure that the context is set.
-  // TODO why not just check that we have a node context?
-  if (!is_numeric($context['node_nid'])) {
+  if (empty($context['node'])) {
     return array();
   }
 
@@ -99,7 +98,6 @@ function ding_serendipity_site_field_related_content_serendipity_add($context) {
     return array();
   }
 
-  // TODO Where is the this field declared? I could not spot it in the codebase.
   $content = field_get_items('node', $node, 'field_related_content');
   if (!empty($content)) {
     // Iterate through the items.
@@ -114,7 +112,6 @@ function ding_serendipity_site_field_related_content_serendipity_add($context) {
     }
   }
 
-  // TODO Where is the this field declared? I could not spot it in the codebase.
   if (!empty($node->field_use_serendipity)) {
     $val = $node->field_use_serendipity[field_language('node', $node, 'field_use_serendipity')][0]['value'];
     if ($val) {
@@ -122,9 +119,6 @@ function ding_serendipity_site_field_related_content_serendipity_add($context) {
     }
   }
 
-  // TODO If the node does not have a serendipity field set we use an entirely
-  // different approach to generating suggestions? I would have expected that
-  // to be implemented in two different plugins.
   $view = views_get_view('similarterms');
   $view->set_arguments(array($node->nid));
   $view->set_display('block');
@@ -143,20 +137,4 @@ function ding_serendipity_site_field_related_content_serendipity_add($context) {
   return $results;
 }
 
-/**
- * Implements hook_ding_serendipity_results_alter().
- */
-function ding_serendipity_site_ding_serendipity_results_alter(&$results) {
-  // TODO This seems crucial throughout the site. Is there any reason why this
-  // is not part of the ding_serendipity core module?
-  $context = $results['context'];
-  if (isset($context['node_nid'])) {
-    $id = $context['node_nid'];
-    // Remove current item if it is in the result list.
-    foreach ($results['items'] as $key => $item) {
-      if ($item['id'] == $id) {
-        unset($results['items'][$key]);
-      }
-    }
-  }
-}
+

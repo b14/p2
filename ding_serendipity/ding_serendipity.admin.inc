@@ -40,6 +40,15 @@ function ding_serendipity_admin_form($form, &$form_state) {
     '#maxlength' => 300,
   );
 
+  $form['ding_serendipity_search_string_final_description'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Serendipity final fallback description'),
+    '#description' => t('Let the user know why they get suggestions from this final fallback. Keep it very short.'),
+    '#default_value' => variable_get('ding_serendipity_search_string_final_description', t('The library recommends this')),
+    '#size' => 100,
+    '#maxlength' => 100,
+  );
+
   return system_settings_form($form);
 }
 

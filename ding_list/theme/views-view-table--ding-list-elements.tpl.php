@@ -18,8 +18,7 @@
  *   field id, then row number. This matches the index in $rows.
  * @ingroup views_templates
  *
- * TODO This template seems to be quite similar to the original template
- * Please add a comment explaining why it is needed.
+ * This simply adds $row_attributes to every row.
  */
 ?>
 <table <?php if ($classes): print 'class="' . $classes . '" '; endif; ?><?php print $attributes; ?>>

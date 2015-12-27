@@ -15,7 +15,7 @@
  *   The definition is required to have the following values:
  *   - "title": The title of the serendipity function
  *   - "description": A description of what is provides and when it is applied.
- *   - "context keys": Array of context keys, which define the context required
+ *   - "keys": Array of context keys, which define the context required
  *      before the function is called by the serendipity module.
  *   The definition can also include the following values:
  *   - "callback": An alternative callback which replaces the default:
@@ -32,7 +32,7 @@ function hook_serendipity_info() {
     'machine_name' => array(
       'title' => 'some title',
       'description' => 'A nice informative description',
-      'context keys' => array('key 1', 'key2', 'key3', '...'),
+      'keys' => array('key 1', 'key2', 'key3', '...'),
       'callback' => NULL,
       'access callback' => NULL,
       'file' => NULL,
