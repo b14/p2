@@ -10,25 +10,6 @@
  * Get an overview of the current registered interaction functions and keys.
  */
 function ding_interaction_admin_overview($form, &$form_state) {
-  $form['ding_interaction_settings'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Ding interaction settings'),
-    // TODO Is there any reason behind these weights? Is it not sufficient to
-    // render them in the order they are added?
-    // - No other reason than it looks nicer in this order..
-    '#weight' => 5,
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
-  );
-  $form['ding_interaction_settings']['ding_interaction_page_count'] = array(
-    '#type' => 'select',
-    '#title' => t('Page count'),
-    '#description' => t('Set the amount of page views between ding interaction displays'),
-    '#options' => range(1, 20),
-    '#default_value' => variable_get('ding_interaction_page_count', 5),
-    '#required' => TRUE,
-  );
-
   $form['ding_interaction_callbacks'] = array(
     '#type' => 'tableselect',
     '#header' => array(
@@ -73,6 +54,21 @@ function ding_interaction_admin_overview($form, &$form_state) {
     '#type' => 'value',
   );
 
+  $form['ding_interaction_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Ding interaction settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['ding_interaction_settings']['ding_interaction_page_count'] = array(
+    '#type' => 'select',
+    '#title' => t('Page count'),
+    '#description' => t('Set the amount of page views between ding interaction displays'),
+    '#options' => range(1, 20),
+    '#default_value' => variable_get('ding_interaction_page_count', 5),
+    '#required' => TRUE,
+  );  
+  
   return system_settings_form($form);
 }
 

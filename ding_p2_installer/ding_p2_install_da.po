@@ -53380,3 +53380,14 @@ msgstr ""
 "eller brug facetterne i menuen til venstre for at afgrænse din "
 "søgning."
 
+#: /list/32/edit
+msgid "Save list"
+msgstr "Gem liste"
+
+#: /ting/object/870970-basis%3A05009529
+msgid "Follow the subject @subject"
+msgstr "Følg emnet @subject"
+
+#: /ting/object/870970-basis%3A05009529
+msgid "Follow the author @author"
+msgstr "Følg forfatteren @author"

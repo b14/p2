@@ -24,9 +24,7 @@ function ding_list_set_order_callback($list_id) {
 
   $item = entity_load_single('ding_type', $_POST['item']);
   $previous = FALSE;
-  if (isset($_POST['item'])) {
-    $previous = entity_load_single('ding_type', $_POST['previous']);
-  }
+  $previous = entity_load_single('ding_type', $_POST['previous']);
   ding_list_set_element_position($list, $item, $previous);
 
   $html = t('List changed');

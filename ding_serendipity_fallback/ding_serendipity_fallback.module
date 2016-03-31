@@ -42,11 +42,11 @@ function ding_serendipity_fallback_ting_object_serendipity_add($context) {
       $results = ding_serendipity_do_search($query);
     }
     catch (Exception $e) {
-      // NOP
+      watchdog_exception('ding_serendipity_fallback', $e);
     }
 
     foreach ($results as & $item) {
-      $item['info']['description'] = variable_get('ding_serendipity_search_string_final_description',t('The library recommends this'));
+      $item['info']['description'] = variable_get('ding_serendipity_search_string_final_description', t('The library recommends this'));
     }
   }
 

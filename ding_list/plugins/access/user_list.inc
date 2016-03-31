@@ -52,10 +52,6 @@ function ding_list_user_list_ctools_access_check($conf, $context) {
   $token = isset($_GET['token']) ? $_GET['token'] : FALSE;
   
   $result = ding_list_user_has_access($list, $conf['visibility_settings'], $account, $token);
-  
-  if ($result === FALSE && !empty($token)) {
-    drupal_goto('dinglist/login/' . $list->id);
-  }
 
   return $result;
 }

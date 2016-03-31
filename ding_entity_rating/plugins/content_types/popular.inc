@@ -46,10 +46,7 @@ function ding_entity_rating_popular_content_type_render($subtype, $conf, $panel_
     ));
   }
   catch (Exception $e) {
-    // TODO Is there a more specific exception we could catch here? This is very
-    // broad. Also I would expect that we at least logged exceptions using
-    // watchdog_exception().
-    // NOP
+    watchdog_exception('ding_entity_rating', $e);
   }
   
   if (empty($openlist_items)) {
@@ -104,13 +101,8 @@ function ding_entity_rating_popular_content_type_edit_form_validate($form, &$for
     return;
   }
   
-  $error = FALSE;
-  $parts = explode('-', $form_state['values']['month']);
-  if(!is_numeric($parts[0]) && strlen($parts[0]) != 4) {
-    $error = TRUE;
-  } else if(!isset($parts[1]) || !is_numeric($parts[1]) && strlen($parts[1]) != 2) {
-    $error = TRUE;
-  }
+  $date = DateTime::createFromFormat('Y-m', $form_state['values']['month']);
+  $error = !$date || $date->format('Y-m') != $form_state['values']['month'];
 
   if($error) {
     form_error($form['month'], t('Please make sure you used the correct date format.'));

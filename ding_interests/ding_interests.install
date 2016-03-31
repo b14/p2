@@ -19,9 +19,11 @@ function ding_interests_update_7001() {
   $term = new stdClass();
   $term->name = 'Udvalgt';
   $term->vid = $vocab->vid;
-  taxonomy_term_save($term);
+  $term1 = taxonomy_term_save($term);
   $term2 = new stdClass();
   $term2->name = 'Fravalgt';
   $term2->vid = $vocab->vid;
-  taxonomy_term_save($term2);  
+  $term = taxonomy_term_save($term2);
+  variable_set('ding_interests_selected_tid', $term1->tid);
+  variable_set('ding_interests_optedout_tid', $term2->tid);
 }

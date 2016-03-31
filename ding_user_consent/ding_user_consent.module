@@ -55,8 +55,7 @@ function ding_user_consent_menu() {
     'title' => 'Ding user consent set consent',
     'page callback' => 'ding_user_consent_callback',
     'page arguments' => array(2, 3, 4),
-    // Call back is safe for any user.
-    'access arguments' => array('access content'),
+    'access arguments' => array('use personalisation'),
   );
 
   return $items;
@@ -73,10 +72,10 @@ function ding_user_consent_callback($ajax, $id, $set) {
   ding_user_consent_set(array($id => $set), $user);
 
   if ($set == '1') {
-    $output .= t('You said yes');
+    $output = t('You said yes');
   }
   else {
-    $output .= t('You said no');
+    $output = t('You said no');
   }
 
   if ($ajax) {
@@ -353,7 +352,7 @@ function ding_user_consent_user_presave(&$edit, $account, $category) {
   if (ding_user_is_provider_user($account)) {
     if (!isset($account->data['consent'])) {
       $consent = ding_provider_invoke('user_consent', 'get_consent', $account);
-      if (!isset($consent[DING_USER_CONSENT_LOAN_HISTORY_STORE]) && $consent[DING_USER_CONSENT_LOAN_HISTORY_STORE]) {
+      if (isset($consent[DING_USER_CONSENT_LOAN_HISTORY_STORE]) && $consent[DING_USER_CONSENT_LOAN_HISTORY_STORE]) {
         $edit['data']['consent'] = 1;
       }
     }

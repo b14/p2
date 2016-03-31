@@ -22,8 +22,18 @@ function ding_list_list_followers_content_type_render($subtype, $conf, $panel_ar
   $list = $context->data;
 
   $block = new stdClass();
-  $block->title = entity_label('ding_type', $list);
-  $block->content = array('#theme' => 'ding_list_followers', '#list' => $list);
+  $block->content = array(
+    // Panels run the title through translation, so we add it to the content.
+    array(
+      '#theme' => 'html_tag',
+      '#tag' => 'h2',
+      '#attributes' => array(
+        'class' => array('pane-title'),
+      ),
+      '#value' => entity_label('ding_type', $list)
+    ),
+    array('#theme' => 'ding_list_followers', '#list' => $list)
+  );
 
   return $block;
 }

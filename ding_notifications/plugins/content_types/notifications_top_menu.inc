@@ -35,11 +35,12 @@ function ding_notifications_admin_info($subtype, $conf, $context) {
 function ding_notifications_content_type_render($subtype, $conf, $panel_args, $context) {
   global $user;
 
-  // Create a custom cache_key that is a product of both the user and the configuration
-  $cache_key = DING_NOTIFICATIONS_CACHE_PREFIX . ':' . $user->uid . ':' . md5(serialize($conf));
+  // Create a custom cache_key that is a product of both the user and the configuration.
+  $cache_key = DING_NOTIFICATIONS_CACHE_PREFIX . ':' . $user->uid;
   $cache = cache_get($cache_key);
 
   // Checking out the user page flushes the cache.
+  // By doing so we ensure users always see freshly updated notification counts on the user landing page.
   if (isset($cache->expire) && $cache->expire > time() && arg(0) != 'user') {
     return $cache->data;
   }
@@ -158,6 +159,12 @@ function ding_notifications_content_type_edit_form_submit($form, &$form_state) {
   $form_state['conf']['top_menu_items'] = !empty($form_state['values']['top_menu_items']) ? $form_state['values']['top_menu_items'] : $options;
 }
 
+/**
+ * Get pane options for the notifications pane admin config form.
+ *
+ * @return array
+ *   Array of available pane options for notifications top menu.
+ */
 function ding_notifications_get_top_menu_options() {
   $options = array(
     'ready_to_pickup' => t('Ready to pickup'),

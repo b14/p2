@@ -32,7 +32,7 @@ function ding_entity_rating_serendipity_info() {
 function ding_entity_rating_materials_by_rating_serendipity_add($context) {
   global $user;
   // TODO why do we return an empty array is we are not on the frontpage? @MSD
-  if (!user_is_logged_in() || !$context['frontpage']) {
+  if (!$context['frontpage'] || !ding_user_is_provider_user($user)) {
     return array();
   }
 
@@ -121,12 +121,14 @@ function ding_entity_rating_get_material_by_rating() {
 
   // Fetch a rated element from the group of highest rated elements.
   $rated_element = NULL;
-  while (is_null($rated_element)) {
+  while (is_null($rated_element) && $rating >= $min_rating) {
     if (!empty($ratings[$rating])) {
       $random_key = array_rand($ratings[$rating]);
       $rated_element = $ratings[$rating][$random_key];
       break;
     }
+    
+    $rating -= 1;
   }
 
   // Load and return the element if any.

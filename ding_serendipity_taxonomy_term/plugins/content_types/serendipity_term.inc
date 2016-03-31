@@ -46,6 +46,7 @@ function ding_stt_serendipity_term_content_type_edit_form($form, &$form_state) {
   foreach ($node_types as $type) {
     $node_options[$type->type] = $type->name;
   }
+  // We assume the most common thing to display would be events.
   $form['bundle'] = array(
     '#type' => 'select',
     '#title' => t('Node type'),

@@ -305,7 +305,7 @@ function ding_message_check_list_for_updates($uid, $element_id, $mid, $debug = F
             // Add the count to the new elements count.
             $new_elements_count += $count;
             if ($status != DING_MESSAGE_ACTIVE) {
-              // If the messages has been seen,
+              // If the messages have been seen,
               // set the last and first element ids.
               $last_element_id = $first_collection->ding_entity_id;
               $first_element_id = $result->collections[$collection_ids[$count - 1]]->ding_entity_id;
@@ -317,6 +317,9 @@ function ding_message_check_list_for_updates($uid, $element_id, $mid, $debug = F
         else {
           if (count($result->collections)) {
             // Set all values for a new message to be created.
+            // First element is the first item of the search, which
+            // is actually the last in the array, and last element
+            // is therefore the first item in the array.
             $last_element_id = $first_collection->ding_entity_id;
             $first_element = end($result->collections);
             $first_element_id = $first_element->ding_entity_id;
@@ -366,6 +369,9 @@ function ding_message_check_list_for_updates($uid, $element_id, $mid, $debug = F
           else {
             if (count($result->collections)) {
               // Set all values for a new message to be created.
+              // First element is the first item of the search, which
+              // is actually the last in the array, and last element
+              // is therefore the first item in the array.
               $last_element_id = $first_collection->ding_entity_id;
               $first_element = end($result->collections);
               $first_element_id = $first_element->ding_entity_id;
@@ -701,7 +707,8 @@ function ding_message_build_query($query) {
  * Add additional elements to the url.
  *
  * If the url is a search page add the size parameter 
- * so the search result contains 50 elements.
+ * so the search result contains 50 elements, which 
+ * should be enough to see all new elements in most cases.
  *
  * @param string $url
  *   The url to modify
@@ -712,20 +719,13 @@ function ding_message_build_query($query) {
  *   The modified url containing the first new item id.
  */
 function ding_message_modify_url($url, $eid) {
-  if (strpos($url, '?') !== FALSE) {
-    $url .= '&';
-    if (stripos($url, 'search/ting') !== FALSE) {
-      $url .= 'size=50&';
-    }
-    $url .= 'message=' . $eid;
+  $url .= (strpos($url, '?') !== FALSE) ? '&' : '?';
+  
+  if (stripos($url, 'search/ting') !== FALSE) {
+    $url .= 'size=50&';
   }
-  else {
-    $url .= '?';
-    if (stripos($url, 'search/ting') !== FALSE) {
-      $url .= 'size=50&';
-    }
-    $url .= 'message=' . $eid;
-  }
+  $url .= 'message=' . $eid;
+    
   return $url;
 }
 
@@ -747,8 +747,10 @@ function ding_message_change_status() {
     // Save new state.
     $wrapper->save();
     
-    // Clear cache (to update the header).
-    ding_notifications_clear_cache();
+    // Clear cache (to update the header) if ding_notifications is enabled.
+    if(module_exists('ding_notifications')) {
+      ding_notifications_clear_cache();
+    }
   }
 }
 

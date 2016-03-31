@@ -161,7 +161,7 @@ function ding_serendipity_lists_ting_objects_adhr_serendipity_add($context) {
       }
     }
     catch (Exception $e) {
-      // NOP
+      watchdog_exception('ding_serendipity_lists', $e);
     }
   }
 
@@ -216,7 +216,7 @@ function ding_serendipity_lists_ting_objects_adhl_serendipity_add($context) {
       )));
     }
     catch (Exception $e) {
-      // NOP
+      watchdog_exception('ding_serendipity_lists', $e);
     }
   }
   
@@ -226,12 +226,11 @@ function ding_serendipity_lists_ting_objects_adhl_serendipity_add($context) {
     $item = ding_list_convert_cql($item['object_id']);
   }
   $buffer = array_unique($buffer);
-  
-  // 
+
   foreach ($buffer as $id) {
     $obj = ding_entity_load($id, 'ting_object');
     if ($obj) {
-      $title = l($obj->getTitle(), "ting/object/" . $id);
+      $title = l($obj->getTitle(), entity_uri('ting_object', $obj));
 
       $results[] = array(
         'type' => 'ting_object',
@@ -292,6 +291,9 @@ function ding_serendipity_lists_loan_adhl_serendipity_add($context) {
       // @todo: Brond3 specs.
       $conv_id = ding_list_convert_cql($ting_object_id);
 
+      // Create structure similar to DingProviderLoan, in order to mix current
+      // loans with previous loans. We just need the ding_entity_id below, for
+      // loading the random picks.
       $loan = new StdClass();
       $loan->ding_entity_id = $conv_id;
       $loans[] = $loan;
@@ -415,7 +417,7 @@ function ding_serendipity_lists_followed_terms_nodes_serendipity_add($context) {
       'type' => 'node',
       'id' => $nid,
       'info' => array(
-        'description' => t('Because you follow @term',array('@term',$termname)),
+        'description' => t('Because you follow @term', array('@term', $termname)),
       ),
     );
   }

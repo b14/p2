@@ -162,7 +162,7 @@ function ding_list_create_ding_list_element(&$list, $type, $values, $account = N
       $openlist_id = ding_provider_invoke('openlist', 'request', 'createElement', array($list->openlist_id, $openlist_data));
     }
     catch (Exception $e) {
-      drupal_set_message(t("An error occurred, your element wasn't created. Please contact the administrator if this problem persists."), 'error');
+      watchdog_exception('ding_list', $e);
       return FALSE;
     }
   }
@@ -238,7 +238,6 @@ function ding_list_create_ding_list($title, $type = DING_LIST_TYPE_USER_LIST, $a
       ));
     }
     catch (Exception $e) {
-      drupal_set_message(t("An error occurred, your list wasn't created. Please contact the administrator if this problem persists."), 'error');
       return FALSE;
     }
   }

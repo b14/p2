@@ -61,10 +61,8 @@ function ding_list_remove_element_form_submit($form, &$form_state) {
  * @param string $title
  *   If there's more than 1 list, use this as the title for the submit button,
  *   when there's only a single list use that list add text as submit text.
- * @param string $search_title
- *   This is passed on to the submit, and added into the search_title.
  */
-function ding_list_add_element_form($form, &$form_state, $type, $value, $title = 'Dinglist', $search_title = '') {
+function ding_list_add_element_form($form, &$form_state, $type, $value, $title = 'Dinglist') {
   if (is_array($type)) {
     $type = key($type);
   }
@@ -90,22 +88,26 @@ function ding_list_add_element_form($form, &$form_state, $type, $value, $title =
   }
   else {
     $list = current($options);
-    $form['list'] = array(
-      '#type' => 'hidden',
-      '#value' => $list['list_id'],
-    );
+    if (!ding_list_has_ding_list_element(ding_list_get_list($list['list_id']), $type, $value)) {
+      $form['list'] = array(
+        '#type' => 'hidden',
+        '#value' => $list['list_id'],
+      );
 
-    $submit_title = $list['title'];
+      $submit_title = $list['title'];
+    }
   }
 
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => $submit_title,
-    '#ajax' => array(
-      'callback' => 'ding_list_add_element_form_callback',
-      'wrapper' => 'ding-list-add-element-form',
-    ),
-  );
+  if (isset($form['list'])) {
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => $submit_title,
+      '#ajax' => array(
+        'callback' => 'ding_list_add_element_form_callback',
+        'wrapper' => 'ding-list-add-element-form',
+      ),
+    );
+  }
 
   return $form;
 }
@@ -227,7 +229,7 @@ function ding_list_create_list_form($form, &$form_state, $existing = FALSE) {
     // The user can is always allowed to edit existing lists.
     $form['actions']['edit_list'] = array(
       '#type' => 'submit',
-      '#value' => t('Edit list'),
+      '#value' => t('Save list'),
     );
 
     if (ding_list_allowed($existing, DING_LIST_OPERATION_DELETE)) {
@@ -324,7 +326,7 @@ function ding_list_create_list_form_submit($form, &$form_state) {
     );
 
     if ($list === FALSE) {
-      drupal_set_message(t("Unknown error while creating the list."));
+      drupal_set_message(t("An error occurred, your list wasn't created. Please contact the administrator if this problem persists."), 'error');
       return;
     }
     

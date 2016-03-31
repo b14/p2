@@ -107,9 +107,8 @@ function ding_serendipity_ting_entity_ting_object_author_serendipity_add($contex
   
   $query = implode(' AND ', $creators);
 
-  // TODO: This function is not defined?
-  // $results = ding_base_do_search($query, array());
-  $results = array();
+  $results = ding_serendipity_do_search($query, array());
+
   foreach($results as &$item) {
     $item['info'] = array(
       'description' =>  t('This material has been selected based on the authors of the material you are viewing.'),
@@ -264,7 +263,7 @@ function ding_serendipity_ting_entity_ting_object_adhr_serendipity_add($context)
     ));
   }
   catch (Exception $e) {
-    // NOP
+    watchdog_exception('ding_serendipity_ting_entity', $e);
   }
   
   foreach ($results as &$item) {
@@ -301,7 +300,7 @@ function ding_serendipity_ting_entity_ting_object_openlist_adhl_serendipity_add(
     ));
   }
   catch (Exception $e) {
-    // NOP
+    watchdog_exception('ding_serendipity_ting_entity', $e);
   }
   
   foreach ($results as &$item) {

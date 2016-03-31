@@ -1,8 +1,0 @@
-<?php
-
-/**
- * @file
- * Code for the Ding interaction entity feature.
- */
-
-include_once 'ding_interaction_feature.features.inc';

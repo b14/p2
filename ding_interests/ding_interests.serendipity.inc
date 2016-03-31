@@ -97,6 +97,8 @@ function ding_interests_nodes_by_bundle_serendipity_add($context) {
   // Fetch followed terms.
   $term = ding_interests_get_random_interest_term('interests');
   if (!empty($term)) {
+    // We could do this using EntityFieldQuery, but every tag field
+    // has a different name for each bundle, so this approach is simpler.
     $select = db_select('taxonomy_index', 'ti');
     $select->addField('ti', 'nid');
     $select->condition('ti.tid', array($term->tid), 'IN');

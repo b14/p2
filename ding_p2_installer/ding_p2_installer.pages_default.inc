@@ -120,15 +120,7 @@ function ding_p2_installer_default_page_manager_handlers() {
     $pane->subtype = 'carousel';
     $pane->shown = TRUE;
     $pane->access = array(
-      'plugins' => array(
-        0 => array(
-          'name' => 'frontpage_promoter',
-          'settings' => array(
-            'promoter' => 'ting_search_carousel',
-          ),
-          'not' => FALSE,
-        ),
-      ),
+      'plugins' => array(),
     );
     $pane->configuration = array(
       'override_title' => 1,
@@ -196,7 +188,14 @@ function ding_p2_installer_default_page_manager_handlers() {
       'override_title_text' => '',
       'override_title_heading' => 'h2',
     );
-    $pane->cache = array();
+    $pane->cache = array(
+      'method' => 'lazy',
+      'settings' => array(
+        'load_strategy' => 'pane-visible',
+        'show_spinner' => 1,
+        'load_text' => '',
+      ),
+    );
     $pane->style = array(
       'settings' => NULL,
     );
@@ -223,7 +222,10 @@ function ding_p2_installer_default_page_manager_handlers() {
       'override_title_text' => 'Månedens populæreste titler',
       'override_title_heading' => 'h2',
     );
-    $pane->cache = array();
+    $pane->cache = array(
+      'method' => '0',
+      'settings' => array(),
+    );
     $pane->style = array(
       'settings' => NULL,
     );
@@ -303,6 +305,7 @@ function ding_p2_installer_default_page_manager_handlers() {
   $display->hide_title = PANELS_TITLE_NONE;
   $display->title_pane = '0';
   $handler->conf['display'] = $display;
+
 
   $handlers['page_ding_frontpage__panel_context_1'] = $handler;
 
@@ -554,7 +557,7 @@ function ding_p2_installer_default_page_manager_handlers() {
   
   // Ding site template
   $handler = new stdClass();
-  $handler->disabled = FALSE;
+  $handler->disabled = FALSE; /* Edit this to true to make a default handler disabled initially */
   $handler->api_version = 1;
   $handler->name = 'site_template_panel_context_1';
   $handler->task = 'site_template';
@@ -684,7 +687,14 @@ function ding_p2_installer_default_page_manager_handlers() {
       'override_title_text' => '',
       'override_title_heading' => 'h2',
     );
-    $pane->cache = array();
+    $pane->cache = array(
+      'method' => 'lazy',
+      'settings' => array(
+        'load_strategy' => 'page-loaded',
+        'show_spinner' => 0,
+        'load_text' => '',
+      ),
+    );
     $pane->style = array(
       'settings' => NULL,
     );
@@ -959,28 +969,6 @@ function ding_p2_installer_default_page_manager_handlers() {
     $pane->uuid = 'd9c1432b-77cc-432c-987a-eb64569a0b88';
     $display->content['new-d9c1432b-77cc-432c-987a-eb64569a0b88'] = $pane;
     $display->panels['header'][2] = 'new-d9c1432b-77cc-432c-987a-eb64569a0b88';
-    $pane = new stdClass();
-    $pane->pid = 'new-37d18c98-64ec-448f-ac62-ad0cc199fe06';
-    $pane->panel = 'header';
-    $pane->type = 'block';
-    $pane->subtype = 'ding_wayf-login';
-    $pane->shown = TRUE;
-    $pane->access = array();
-    $pane->configuration = array(
-      'override_title' => 0,
-      'override_title_text' => '',
-    );
-    $pane->cache = array();
-    $pane->style = array(
-      'settings' => NULL,
-    );
-    $pane->css = array();
-    $pane->extras = array();
-    $pane->position = 3;
-    $pane->locks = array();
-    $pane->uuid = '37d18c98-64ec-448f-ac62-ad0cc199fe06';
-    $display->content['new-37d18c98-64ec-448f-ac62-ad0cc199fe06'] = $pane;
-    $display->panels['header'][3] = 'new-37d18c98-64ec-448f-ac62-ad0cc199fe06';
     $pane = new stdClass();
     $pane->pid = 'new-94a239e5-00e0-4807-917f-df52c53405e7';
     $pane->panel = 'navigation';

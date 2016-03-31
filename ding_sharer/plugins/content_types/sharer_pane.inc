@@ -39,7 +39,7 @@ function ding_sharer_content_type_render($subtype, $conf, $panel_args, $context)
     foreach ($conf['communities'] as $community) {
       $title = ucfirst($community);
       // The share URL is created in js on the client side.
-      $output->content .= '<a href="#" class="sharer-button sharer-' . $community . '">' . t('Share on @community', array('@community' => $title)) . '</a>';
+      $output->content .= '<a href="#" target="_blank" class="sharer-button sharer-' . $community . '">' . t('Share on @community', array('@community' => $title)) . '</a>';
     }
 
     $output->content = '<div class="sharer">' . $output->content . '</div>';

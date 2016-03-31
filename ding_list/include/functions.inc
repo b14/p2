@@ -88,12 +88,17 @@ function ding_list_get_add_to_list_data($type, $value, $value_title = FALSE) {
   if (empty($lists)) {
     return $data;
   }
+  
+  dpm($lists);
 
   // Fill the $data array with actions, getting one action for each list.
   foreach ($lists as $list) {
     $list_title = $list->title;
 
     if ($list->uid != $user->uid) {
+      if (!ding_list_user_has_access($list, DING_LIST_PERMISSION_EDIT)) {
+        continue;
+      }
       $username = ding_list_list_username($list);
       if ($username) {
         $list_title .= '(' . $username . ')';
@@ -133,7 +138,7 @@ function ding_list_get_add_to_list_ting_object_creators($ting_object) {
   
   $data = array();
   
-  $creators = $ting_object->creators;
+  $creators = $ting_object->getCreators();
   foreach ($creators as & $creator) {
     $creator = 'phrase.creator="' . $creator . '"';
   }
@@ -141,9 +146,9 @@ function ding_list_get_add_to_list_ting_object_creators($ting_object) {
     $lists = ding_list_get_lists(DING_LIST_TYPE_FOLLOW_AUTHOR);
 
     foreach ($lists as $list) {
-      if (!ding_list_has_ding_list_element($list, 'follow_author', $creator)) {
-        $pretty_author = implode(', ', $ting_object->creators);
-        $list_title = t('Follow @author', array('@author' => $pretty_author));
+      if (!ding_list_has_ding_list_element($list, DING_LIST_TYPE_FOLLOW_AUTHOR, $creator)) {
+        $pretty_author = implode(', ', $ting_object->getCreators());
+        $list_title = t('Follow the author @author', array('@author' => $pretty_author));
         if ($list->uid != $user->uid) {
           $username = ding_list_list_username($list);
           if ($username) {
@@ -155,12 +160,12 @@ function ding_list_get_add_to_list_ting_object_creators($ting_object) {
           'list_id' => $list->id,
           'title' => $list_title,
           'value' => $creator,
-          'type' => 'follow_author',
-          'value_title' => implode(', ', $ting_object->creators),
+          'type' => DING_LIST_TYPE_FOLLOW_AUTHOR,
+          'value_title' => implode(', ', $ting_object->getCreators()),
         );
       }
       else {
-        $list_title = t('Already following @author', array('@author' => implode(', ', $ting_object->creators)));
+        $list_title = t('Already following @author', array('@author' => implode(', ', $ting_object->getCreators())));
         $data[] = array(
           'custom' => array(
             'title' => $list_title,
@@ -183,11 +188,11 @@ function ding_list_get_add_to_list_ting_object_subjects($ting_object) {
   
   $data = array();
   
-  foreach ($ting_object->subjects as $subject) {
+  foreach ($ting_object->getSubjects() as $subject) {
     $lists = ding_list_get_lists(DING_LIST_TYPE_FOLLOW);
 
     foreach ($lists as $list) {
-      $list_title = t('Follow @author', array('@author' => $subject));
+      $list_title = t('Follow the subject @subject', array('@subject' => $subject));
 
       // Add username to shared lists.
       if ($list->uid != $user->uid) {
@@ -876,6 +881,9 @@ function ding_list_get_permission_permissions($permission = FALSE) {
  *   The permission to check against.
  * @param object $account
  *   The user account.
+ * @param string $token
+ *   If a token is given, it will be checked against the last 7 days of
+ *   share tokens. If there's a hit permissions will be added.
  *
  * @return bool
  *   TRUE or FALSE depending on the user has access.

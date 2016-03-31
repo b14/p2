@@ -1,7 +1,0 @@
-name = Ding serendipity nodes
-description = display serendipity content based on nodes.
-package = Ding!
-version = "7.x-1.x-dev"
-core = 7.x
-files[] = ding_serendipity_nodes.module
-dependencies[] = ding_similarterms

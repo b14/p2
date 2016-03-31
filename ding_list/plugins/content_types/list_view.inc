@@ -24,6 +24,7 @@ function ding_list_list_view_content_type_render($subtype, $conf, $panel_args, $
   $block = new stdClass();
   $block->title = entity_label('ding_type', $list);
   module_load_include('inc', 'ding_list', 'ding_list.pages');
+  // @TODO: ding_list_list_page() function doesn't seem to exist?
   $block->content[] = ding_list_list_page($list);
 
   return $block;

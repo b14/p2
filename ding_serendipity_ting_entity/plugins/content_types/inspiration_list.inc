@@ -9,8 +9,6 @@ $plugin = array(
   'description' => t('Provide serendipity based on a current ding_object.'),
   'admin info' => 'ding_serendipity_ting_entity_inspiration_list_admin_info',
   'single' => TRUE,
-  // 'edit form' => 'ding_serendipity_ting__entity_inspiration_list_content_type_edit_form',
-  // 'render callback' => 'ding_serendipity_ting__entity_inspiration_list_content_type_render',
   'category' => t('Ding!'),
 );
 

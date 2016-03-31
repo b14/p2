@@ -33,8 +33,26 @@ function ding_entity_rating_menu() {
     'page arguments' => array(1, 2, 3, 4),
     'access arguments' => array('use personalisation'),
   );
+  
+  $items['ding_entity_rating/get'] = array(
+    'title' => 'Ding entity get rating',
+    'page callback' => 'ding_entity_rating_get_user_rating_callback',
+    // 'page arguments' => array(2),
+    'access arguments' => array('use personalisation'),
+  );
 
   return $items;
+}
+
+function ding_entity_rating_get_user_rating_callback() {
+  $ratings = array();
+  
+  foreach (ding_entity_load_multiple($_GET['ids']) as $object) {
+    $ratings[$object->ding_entity_id] = ding_entity_rating_get_user_rating($object);
+  }
+  
+  echo drupal_json_encode($ratings);
+  drupal_exit();
 }
 
 /**
@@ -51,7 +69,8 @@ function ding_entity_rating_menu() {
  */
 function ding_entity_rating_add_to_list_callback($ajax, $entity, $account, $rating) {
   // Access check for permission.
-  if(!user_access('use personalisation')) {
+  global $user;
+  if($user->uid != $account->uid) {
     return '';
   }
   
@@ -92,77 +111,89 @@ function ding_entity_rating_ding_list_operations() {
 }
 
 /**
- * Implements hook_field_extra_fields().
+ * Implements hook_field_info().
  */
-function ding_entity_rating_field_extra_fields() {
-  $extra = array();
-  
+function ding_entity_rating_field_info() {
   // Add the rating form and options to ting objects display.
-  // TODO Why is this implemented using hook_field_extra_fields?
-  // We would normally use virtual field to achieve this.
-  // - Less dependency, this hook is a part of drupal core, virtual_field is a module.
-  $extra['ting_object']['ting_object'] = array(
-    'form' => array(
-      'ding_entity_rating_result' => array(
-        'label' => t('Ding entity rating results'),
-        'description' => t('Average result of all ratings given to this entity'),
-        'weight' => 0,
-      ),
-      'ding_entity_rating_action' => array(
-        'label' => t('Ding entity rating action'),
-        'description' => t('Enables the users to rate this entity'),
-        'weight' => 0,
-      ),
+  $extra = array(
+    'ding_entity_rating_result' => array(
+      'label' => t('Average rating'),
+      'description' => t('Average result of all ratings given to this entity'),
+      'default_widget' => 'hidden',
+      'default_formatter' => 'ding_entity_rating_result_default',
     ),
-    'display' => array(
-      'ding_entity_rating_result' => array(
-        'label' => t('Ding entity rating result'),
-        'description' => t('Average result of all ratings given to this entity'),
-        'weight' => 0,
-        'visible' => FALSE,
-      ),
-      'ding_entity_rating_action' => array(
-        'label' => t('Ding entity rating action'),
-        'description' => t('Enables the users to rate this entity'),
-        'weight' => 0,
-        'visible' => FALSE,
-      ),
+    
+    'ding_entity_rating_action' => array(
+      'label' => t('Rate this'),
+      'description' => t('Enables the users to rate this entity'),
+      'default_widget' => 'hidden',
+      'default_formatter' => 'ding_entity_rating_action_default',
     ),
   );
 
-  return $extra;
+  return $extra;  
 }
 
 /**
- * Implements hook_entity_view().
+ * Implements hook_widget_info_alter().
  */
-function ding_entity_rating_entity_view($entity, $type, $view_mode, $langcode) {
-  // Only add if the current entity is TingEntity.
-  if ($entity instanceof TingEntity) {
-    // Get the fields which are displayed with this view mode.
-    $fields = field_extra_fields_get_display('ting_object', 'ting_object', $view_mode);
+function ding_entity_rating_widget_info_alter(&$info) {
+  if (isset($info['hidden'])) {
+    $info['hidden']['field types'] += array(
+      'ding_entity_rating_action',
+      'ding_entity_rating_result',
+    );
+  }
+}
 
-    // Add the rating form to the ting entity view_mode.
-    if (isset($fields['ding_entity_rating_action']) && $fields['ding_entity_rating_action']['visible']) {
-      if (is_object($entity)) {
-        // Create a fake field.
-        $entity->content['ding_entity_rating_action'] = array(
-          '#theme' => 'field',
-          '#label_hidden' => FALSE,
-          '#label' => t('Rate this'),
-          '#items' => array(theme('ding_entity_rating_display', array('entity' => $entity))),
-          '#weight' => $fields['ding_entity_rating_action']['weight'],
-          '#bundle' => 'ting_object',
-          '#field_name' => 'ding_entity_rating',
-          '#field_type' => 'text',
-          '#label_display' => TRUE,
-          '#title' => 'Title not used.',
-          '#view_mode' => $view_mode,
-          0 => array('#markup' => theme('ding_entity_rating_display', array('entity' => $entity))),
+/**
+ * Implements hook_field_load().
+ */
+function ding_entity_rating_field_load($entity_type, $entities, $field, $instances, $langcode, &$items, $age) {
+  foreach ($entities as $id => $entity) {
+    $items[$id][0] = array(
+      'id' => $entity->id,
+    );
+  }
+}
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function ding_entity_rating_field_formatter_info() {
+  return array(
+    'ding_entity_rating_result_default' => array(
+      'label' => t('Default'),
+      'field types' => array(
+        'ding_entity_rating_result',
+      ),
+    ),
+    'ding_entity_rating_action_default' => array(
+      'label' => t('Default'),
+      'field types' => array(
+        'ding_entity_rating_action',
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function ding_entity_rating_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+
+  foreach ($items as $delta => $item) {
+    switch ($display['type']) {
+      case 'ding_entity_rating_action_default':
+        $element[$delta] = array(
+          '#markup' => theme('ding_entity_rating_display', array('entity' => $entity)),
         );
-      }
+        break;
     }
   }
+
+  return $element;
 }
 
 /**
@@ -240,16 +271,16 @@ function template_preprocess_ding_entity_rating_display(&$variables) {
   drupal_add_css($module_path . '/css/ding_entity_rating.css');
   drupal_add_js($module_path . '/js/ding_entity_rating.js');
 
-  $variables['rating'] = ding_entity_rating_get_user_rating($entity);
+  $variables['rating'] = FALSE;
   
   // If the user hasn't rated and this isn't the rating list itself, enable
   // rating.
-  if (!ding_entity_rating_is_rating_list()) {
-    $variables['classes_array'][] = 'ding-entity-rating-submitted';
-  }
-  else {
+  // if (!ding_entity_rating_is_rating_list()) {
+    // $variables['classes_array'][] = 'ding-entity-rating-submitted';
+  // }
+  // else {
     $variables['classes_array'][] = 'ding-entity-rating';
-  }
+  // }
 
   if (user_access('use personalisation')) {
     $variables['classes_array'][] = 'rateable';
@@ -269,7 +300,7 @@ function template_preprocess_ding_entity_rating_display(&$variables) {
  * Theme function for ding_entity_rating_display.
  */
 function theme_ding_entity_rating_display($variables) {
-  $output = '<div class="' . implode(' ', $variables['classes_array']) . '" data-ding-entity-rating-path="' . $variables['path'] . '">';
+  $output = '<div class="' . implode(' ', $variables['classes_array']) . '" data-ding-entity-rating-id="' . $variables['entity']->ding_entity_id . '" data-ding-entity-rating-path="' . $variables['path'] . '">';
   
   $output .= ding_entity_rating_build_theme_list($variables['rating']);
   
@@ -356,6 +387,8 @@ function ding_entity_rating_get_average($entity) {
  *   The user account who's rating list to use.
  * @param int $rating
  *   The rating given to the ting object entity.
+ * @return object $entity
+ *   Return the added ding list element entity.
  */
 function ding_entity_rating_add_to_list($entity, $account, $rating) {
   // Get the rating list.
@@ -384,12 +417,15 @@ function ding_entity_rating_add_to_list($entity, $account, $rating) {
  *   The ting object entity to remove from the rating list.
  * @param object $account
  *   The user account who's rating list to use.
+ * @return bool
+ *   Return TRUE if entity was successfully removed, FALSE if not. 
  */
 function ding_entity_rating_remove_from_list($entity, $account) {
   // Get the rating list.
   $list = ding_list_get_list(DING_ENTITY_RATING_LIST, $account);
   if ($element = ding_list_has_ding_list_element($list, 'ting_object', $entity->ding_entity_id)) {
     ding_list_detach_ding_list_element($list, array($element->id));
+    return TRUE;
   } else {
     return FALSE;
   }

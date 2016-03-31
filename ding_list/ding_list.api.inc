@@ -18,8 +18,8 @@ function hook_ding_list_operations() {
       // The list is deleteable.
       DING_LIST_OPERATION_DELETE => TRUE,
       
-      // It's possible to attach ting_objects to the list.
-      DING_LIST_OPERATION_ATTACH => array('ting_object'),
+      // The ding list elements type allowed to attach to this list.
+      DING_LIST_OPERATION_ATTACH => array('some_type', 'another_type'),
       
       // And it's allowed to detach elements again.
       DING_LIST_OPERATION_DETACH => TRUE,

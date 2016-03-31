@@ -781,6 +781,10 @@ function ding_serendipity_ding_serendipity_results_alter(&$results) {
   }
 }
 
+/**
+ * Helper function to display administration information in panels.
+ * Can be used within a ctools plugin file for admin info.
+ */
 function ding_serendipity_get_default_admin_info($subtype, $conf, $context) {
   $output = new stdClass();
   $output->title = t('Serendipity inspiration list');
@@ -797,13 +801,16 @@ function ding_serendipity_get_default_admin_info($subtype, $conf, $context) {
  * Setup a base form for serendipity ctools content types.
  */
 function ding_serendipity_form_base($form_state) {
+
+  // Collect viewmodes from nodes.
+  $entity_info_node = entity_get_info('node');
+  $view_modes = array_keys($entity_info_node['view modes']);
   
-  $entity_info = entity_get_info('node');
-  $view_modes = array_keys($entity_info['view modes']);
+  // Merge with viewmodes from ting_object.
+  $entity_info_ting = entity_get_info('ting_object');
+  $view_modes = array_merge($view_modes, array_keys($entity_info_ting['view modes']));
   
-  $entity_info = entity_get_info('ting_object');
-  $view_modes = array_merge($view_modes, array_keys($entity_info['view modes']));
-  
+  // We want each viewmode as both key and value in the array.
   $view_modes = array_combine($view_modes, $view_modes);
 
   $form = array();

@@ -103,7 +103,6 @@ function ding_interaction_manual_form_alter(&$form, &$form_state, $form_id) {
     $form['ding_interaction_help'] = array(
       '#type' => 'fieldset',
       '#title' => t('Ding interaction help'),
-      '#weight' => 6,
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
     );
